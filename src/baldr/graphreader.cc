@@ -99,7 +99,7 @@ GraphReader::tile_extract_t::tile_extract_t(const boost::property_tree::ptree& p
 
 std::shared_ptr<const GraphReader::tile_extract_t>
 GraphReader::get_extract_instance(const boost::property_tree::ptree& pt) {
-  static std::shared_ptr<const GraphReader::tile_extract_t> tile_extract(
+  std::shared_ptr<const GraphReader::tile_extract_t> tile_extract(
       new GraphReader::tile_extract_t(pt));
   return tile_extract;
 }

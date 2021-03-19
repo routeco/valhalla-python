@@ -1266,11 +1266,6 @@ function filter_tags_generic(kv)
      return 1
    end
 
-   --toss where access=private and highway=service and service != driveway
-   if (kv["access"] == "private" and kv["highway"] == "service" and (kv["service"] == nil or kv["service"] ~= "driveway")) then
-     return 1
-   end
-
    delete_tags = { 'FIXME', 'note', 'source' }
 
    for i,k in ipairs(delete_tags) do
@@ -1304,6 +1299,8 @@ function filter_tags_generic(kv)
         use = 3
      elseif kv["highway"] == "living_street" then
         use = 10
+     elseif use == nil and kv["highway"] == "service" then
+        use = 11
      elseif kv["highway"] == "cycleway" then
         use = 20
      elseif kv["pedestrian"] == "false" and kv["auto_forward"] == "false" and kv["auto_backward"] == "false" and (kv["bike_forward"] == "true" or kv["bike_backward"] == "true") then

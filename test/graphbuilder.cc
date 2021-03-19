@@ -57,9 +57,9 @@ TEST(GraphBuilder, TestConstructEdges) {
       GraphBuilder::BuildEdges(config, ways_file, way_nodes_file, nodes_file, edges_file);
   EXPECT_EQ(tiles.size(), 4);
   EXPECT_EQ(tiles[GraphId{5993698}], 0);
-  EXPECT_EQ(tiles[GraphId{5993706}], 3084);
-  EXPECT_EQ(tiles[GraphId{6005218}], 3113);
-  EXPECT_EQ(tiles[GraphId{6005226}], 8953);
+  EXPECT_EQ(tiles[GraphId{5993706}], 3125);
+  EXPECT_EQ(tiles[GraphId{6005218}], 3154);
+  EXPECT_EQ(tiles[GraphId{6005226}], 8997);
   // This directory should be empty
   filesystem::remove_all(tile_dir);
   GraphBuilder::Build(config, osm_data, ways_file, way_nodes_file, nodes_file, edges_file,
@@ -67,7 +67,8 @@ TEST(GraphBuilder, TestConstructEdges) {
   GraphReader reader(config.get_child("mjolnir"));
   EXPECT_EQ(reader.GetTileSet(2).size(), 4);
   // Clear the tile directory so it doesn't interfere with the next test with graphreader.
-  EXPECT_TRUE(filesystem::remove_all(tile_dir));
+  filesystem::remove_all(tile_dir);
+  EXPECT_TRUE(!filesystem::exists(tile_dir));
 }
 
 // Test that only a subset of tiles are built when explicitly asked for.

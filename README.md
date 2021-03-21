@@ -38,6 +38,6 @@ cmake -B build_debian -G Ninja -DENABLE_TOOLS=OFF -DENABLE_SERVICES=OFF -DENABLE
 
 1. ``/opt/python/cp39-cp39/bin/pip wheel . -w output`
 
-TODO: Problem is that this would produce platform-independent wheels and also not include the C++ extension. As a consequence `auditwheel` can't do its work.
+TODO: Problem is that this would produce platform-independent wheels and also not include the C++ extension. As a consequence `auditwheel` can't do its work (vendoring in valhalla's dependencies from `/usr/lib`).
 
 Goal: make the wheel creation aware of its python version and platform, i.e. `manylinux_x86_64` or so.

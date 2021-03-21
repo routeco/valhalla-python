@@ -1,0 +1,25 @@
+from setuptools import setup, find_packages
+from setuptools.dist import Distribution
+
+DISTNAME = "packagename"
+DESCRIPTION = ""
+MAINTAINER = ""
+MAINTAINER_EMAIL = ""
+URL = ""
+LICENSE = ""
+DOWNLOAD_URL = ""
+VERSION = '1.2'
+PYTHON_VERSION = (2, 7)
+
+
+# Tested with wheel v0.29.0
+class BinaryDistribution(Distribution):
+    """Distribution which always forces a binary package with platform name"""
+    def has_ext_modules(foo):
+        return True
+
+
+setup(packages=find_packages(where="python", include=["valhalla"]),
+      # Include pre-compiled extension
+      package_data={"valhalla": ["python_valhalla.cpython-@Python_VERSION_MAJOR@@Python_VERSION_MINOR@-x86_64-@PLATFORM@.so"]},
+      distclass=BinaryDistribution)

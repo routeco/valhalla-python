@@ -5,6 +5,16 @@ target_link_libraries(python_valhalla PUBLIC valhalla)
 set_target_properties(python_valhalla PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/valhalla)
 set_target_properties(valhalla PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+# determine platform tag
+
+if (APPLE)
+  set(PLATFORM darwin)
+elseif(WIN32)
+  set(PLATFORM win32)
+elseif(UNIX)
+  set(PLATFORM linux-gnu)
+endif()
+
 # build the python lib in bin dir
 # needs to be configure_file, otherwise changes to py files are not detected
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/__init__.py COPYONLY)
@@ -13,6 +23,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.py ${CMAKE_CURRENT_BINARY_DIR}
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/_actor.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/_actor.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildtiles.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/buildtiles.py COPYONLY)
 configure_file(${VALHALLA_SOURCE_DIR}/scripts/valhalla_build_config ${CMAKE_CURRENT_BINARY_DIR}/valhalla/valhalla_build_config.py COPYONLY)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml ${CMAKE_CURRENT_BINARY_DIR}/../pyproject.toml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/../setup.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.cfg ${CMAKE_CURRENT_BINARY_DIR}/../setup.cfg COPYONLY)
 
 message(STATUS "Installing python modules to ${Python_SITEARCH}")
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/valhalla

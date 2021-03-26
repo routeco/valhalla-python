@@ -24,9 +24,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/_actor.py ${CMAKE_CURRENT_BINARY_DIR}
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildtiles.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/buildtiles.py COPYONLY)
 configure_file(${VALHALLA_SOURCE_DIR}/scripts/valhalla_build_config ${CMAKE_CURRENT_BINARY_DIR}/valhalla/valhalla_build_config.py COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml ${CMAKE_CURRENT_BINARY_DIR}/../pyproject.toml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/../setup.py)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.cfg ${CMAKE_CURRENT_BINARY_DIR}/../setup.cfg COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/setup.py.in ${CMAKE_SOURCE_DIR}/setup.py)
+configure_file(${CMAKE_SOURCE_DIR}/setup.cfg.in ${CMAKE_SOURCE_DIR}/setup.cfg)
 
 message(STATUS "Installing python modules to ${Python_SITEARCH}")
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/valhalla

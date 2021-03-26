@@ -36,8 +36,11 @@ cmake -B build_debian -G Ninja -DENABLE_TOOLS=OFF -DENABLE_SERVICES=OFF -DENABLE
 
 #### Build wheels
 
-1. ``/opt/python/cp39-cp39/bin/pip wheel . -w output`
+The `setup.py` will be available after a CMake step in the project root.
 
-TODO: Problem is that this would produce platform-independent wheels and also not include the C++ extension. As a consequence `auditwheel` can't do its work (vendoring in valhalla's dependencies from `/usr/lib`).
+1. Builds the project to `./build_python`: `/opt/python/cp36-cp36m/bin/python3.6 setup.py bdist_wheel` and a wheel to `dist`
+2. Repair the wheel (copies missing libraries and renames the wheel) and : `auditwheel repair valhalla-3.1.0-cp36-cp36m-linux_x86_64.whl --plat manylinux_2_24_x86_64`
 
-Goal: make the wheel creation aware of its python version and platform, i.e. `manylinux_x86_64` or so.
+Gotchas:
+- easiest with `setup.py` in the root directory!
+- shared Python lib wasn't copied into the wheel, had to do setup.py's `package_data` trick

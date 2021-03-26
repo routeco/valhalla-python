@@ -67,3 +67,8 @@ __pycache__/
 site/
 
 .DS_Store
+
+# custom bindings stuff
+/setup.py
+/setup.cfg
+dist/

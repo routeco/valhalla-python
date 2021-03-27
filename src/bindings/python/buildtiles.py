@@ -34,10 +34,10 @@ def _tar_tiles():
         raise RuntimeError("The service was not configured")
     tile_dir = Path(_global_config['mjolnir']['tile_dir'])
     if not tile_dir.is_dir():
-        raise ValueError(f"mjolnir.tile_dir={tile_dir} is not a directory")
+        raise ValueError("mjolnir.tile_dir={} is not a directory".format(tile_dir))
     tile_extract = Path(_global_config['mjolnir']['tile_extract'])
     if not tile_extract.parent.exists():
-        raise ValueError(f"mjolnir.tile_extract={tile_extract} is not inside an existing directory")
+        raise ValueError("mjolnir.tile_extract={} is not inside an existing directory.".format(tile_extract))
 
     with tarfile.open(tile_extract, 'w') as tar:
         tar.add(tile_dir, arcname=os.path.basename(tile_dir))

@@ -29,9 +29,9 @@ configure_file(${CMAKE_SOURCE_DIR}/setup.cfg.in ${CMAKE_SOURCE_DIR}/setup.cfg)
 
 message(STATUS "Installing python modules to ${Python_SITEARCH}")
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/valhalla
-DESTINATION "${Python_SITEARCH}"
-COMPONENT python_valhalla
-FILES_MATCHING PATTERN "*.py")
+  DESTINATION "${Python_SITEARCH}"
+  COMPONENT python_valhalla
+  FILES_MATCHING PATTERN "*.py")
 install(TARGETS python_valhalla
-DESTINATION "${Python_SITEARCH}/valhalla"
-COMPONENT python_valhalla)
+  DESTINATION "${Python_SITEARCH}/valhalla"
+  COMPONENT python_valhalla)

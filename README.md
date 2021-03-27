@@ -1,6 +1,6 @@
 # Valhalla Python
 
-This repo only exists to build better Python bindings and package them for the most common platforms.
+This repo only exists to build better Python bindings and package them for the most common platforms as wheels.
 
 ## Installation
 
@@ -31,15 +31,15 @@ apt-get install -y \
 
 ```
 cd valhalla
-cmake -B build_debian -G Ninja -DENABLE_TOOLS=OFF -DENABLE_SERVICES=OFF -DENABLE_TESTS=OFF -DENABLE_BENCHMARKS=OFF -DGEOS_INCLUDE_DIR=/usr/include/geos -DGEOS_LIB=/usr/lib/x86_64-linux-gnu/libgeos-3.5.1.so -DGEOS_C_LIB=/usr/lib/x86_64-linux-gnu/libgeos_c.so.1.9.1 -DPython_LIBRARIES=/opt/python/cp36-cp36m/lib/libpython3.6m.a -DPython_INCLUDE_DIRS=/opt/python/cp36-cp36m/include/python3.6m -DPython_EXECUTABLE=/opt/python/cp36-cp36m/bin/python3.6
+cmake -B build_python -G Ninja -DENABLE_TOOLS=OFF -DENABLE_SERVICES=OFF -DENABLE_TESTS=OFF -DENABLE_BENCHMARKS=OFF -DGEOS_INCLUDE_DIR=/usr/include/geos -DGEOS_LIB=/usr/lib/x86_64-linux-gnu/libgeos-3.5.1.so -DGEOS_C_LIB=/usr/lib/x86_64-linux-gnu/libgeos_c.so.1.9.1 -DPython_LIBRARIES=/opt/python/cp36-cp36m/lib/libpython3.6m.a -DPython_INCLUDE_DIRS=/opt/python/cp36-cp36m/include/python3.6m -DPython_EXECUTABLE=/opt/python/cp36-cp36m/bin/python3.6
 ```
 
 #### Build wheels
 
 The `setup.py` will be available after a CMake step in the project root.
 
-1. Builds the project to `./build_python`: `/opt/python/cp36-cp36m/bin/python3.6 setup.py bdist_wheel` and a wheel to `dist`
-2. Repair the wheel (copies missing libraries and renames the wheel) and : `auditwheel repair valhalla-3.1.0-cp36-cp36m-linux_x86_64.whl --plat manylinux_2_24_x86_64`
+1. Builds the project to `./build` and installs to `./dist` (**RUN TWICE** for some reason): `/opt/python/cp36-cp36m/bin/python3.6 setup.py bdist_wheel` and a wheel to `dist`
+2. For Linux, repair the wheel (copies missing libraries and renames the wheel): `auditwheel repair valhalla-3.1.0-cp36-cp36m-linux_x86_64.whl --plat manylinux_2_24_x86_64`
 
 Gotchas:
 - easiest with `setup.py` in the root directory!

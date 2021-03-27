@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import time
 import platform
 import subprocess
 from pathlib import Path
@@ -52,11 +53,17 @@ class CMakeBuild(build_ext):
 
     def build_extension(self, ext: Extension):
         extdir = Path(self.get_ext_fullpath(ext.name)).parent.resolve()
-        build_dir = BASEDIR / 'build_python'
-        if Path(build_dir / 'CMakeFiles').exists():
-            rmtree(build_dir / 'CMakeFiles')
-        if Path(build_dir / 'CMakeCache.txt'):
-            os.remove(build_dir / 'CMakeCache.txt')
+
+        tmp_path = Path(self.build_temp)
+        if not tmp_path.exists():
+            tmp_path.mkdir()
+
+        if Path(tmp_path / 'CMakeFiles').exists():
+            rmtree(str(tmp_path / 'CMakeFiles'))
+        if Path(tmp_path / 'CMakeCache.txt').exists():
+            os.remove(str(tmp_path / 'CMakeCache.txt'))
+            
+        # TODO: we need to remove all previously generated shared libraries from the build folder!
 
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}'.format(extdir),
                       '-DPython_EXECUTABLE={}'.format(sys.executable),
@@ -72,7 +79,7 @@ class CMakeBuild(build_ext):
         build_args = ['--config', cfg]
         cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
 
-        cpu_count = mp.cpu_count() if mp.cpu_count() == 1 else mp.cpu_count() - 1
+        cpu_count = mp.cpu_count() if mp.cpu_count() < 4 else mp.cpu_count() - 1
         build_args += ['--', "-j{}".format(cpu_count)]
 
         env = os.environ.copy()
@@ -80,12 +87,8 @@ class CMakeBuild(build_ext):
         if env.get('LUA_INCLUDE_DIR'):
             cmake_args += ['-DLUA_INCLUDE_DIR={}'.format(env['LUA_INCLUDE_DIR'])]
 
-        tmp_path = Path(self.build_temp)
-        if not tmp_path.exists():
-            tmp_path.mkdir()
-
-        subprocess.check_call(['cmake', '-GNinja', '-S{}'.format(ext.sourcedir), '-B{}'.format(build_dir)] + cmake_args, cwd=self.build_temp, env=env)
-        subprocess.check_call(['cmake', '--build', BASEDIR / 'build_python_{}'.format(PY_MAJMIN)] + build_args, cwd=self.build_temp)
+        subprocess.check_call(['cmake', '-GNinja', '-S{}'.format(ext.sourcedir), '-B{}'.format(tmp_path)] + cmake_args, cwd=str(tmp_path), env=env)
+        subprocess.check_call(['cmake', '--build', str(tmp_path)] + build_args, cwd=str(tmp_path))
 
 if sys.version_info < (3,5):
     raise RuntimeError("Python 3.5 or larger required.")
@@ -93,7 +96,7 @@ if sys.version_info < (3,5):
 setup(
     ext_modules=[CMakeExtension('python_valhalla')],
     packages=['valhalla'],
-    package_data={'valhalla': ['*.dll', '*.so']},
+    package_data={'valhalla': ['*.dll', '*.so', '*.dynlib']},
     python_requires=">=3.5",
     cmdclass=dict(build_ext=CMakeBuild, sdist=orig_sdist),
     zip_safe=False,

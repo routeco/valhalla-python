@@ -12,7 +12,7 @@ def _wrapper(func: Callable, req: Union[str, dict]) -> Union[str, dict]:
     if isinstance(req, dict):
         return json.loads(func(json.dumps(req)))
     elif not isinstance(req, str):
-        raise ValueError(f"Request must be either of type str or dict")
+        raise ValueError("Request must be either of type str or dict")
 
     return func(req)
 

@@ -45,3 +45,15 @@ The `setup.py` will be available after a CMake step in the project root.
 Gotchas:
 - easiest with `setup.py` in the root directory!
 - shared Python lib wasn't copied into the wheel, had to do setup.py's `package_data` trick
+
+### Windows
+
+#### Build wheels
+
+To be able to build with Ninja, we'd need to clone the Azure config, which I didn't try yet, saving that for CI.
+
+With MSVC:
+
+```
+call .windows_env.bat && C:\Users\nilsn\AppData\Local\Programs\Python\Python39\python.exe setup.py bdist_wheel
+```

@@ -18,12 +18,3 @@ classifiers =
     Programming Language :: Python :: 3.9
     License :: OSI Approved :: MIT License
     Operating System :: OS Independent
-
-[options]
-package_dir =
-    = @CMAKE_CURRENT_BINARY_DIR@
-packages = find:
-python_requires = >=3.5
-
-[options.packages.find]
-where = @CMAKE_CURRENT_BINARY_DIR@

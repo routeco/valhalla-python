@@ -10,82 +10,124 @@ from sysconfig import get_paths
 import multiprocessing as mp
 from shutil import rmtree
 
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
-from setuptools.command.sdist import sdist as orig_sdist
 from distutils.version import LooseVersion
 
-BASEDIR = Path(__file__).parent.absolute()
-CONFIG = sysconfig.get_config_vars()
-PY_MAJMIN = '@Python_VERSION_MAJOR@@Python_VERSION_MINOR@'
+"""
+Contains partly code taken from pyosmium, partly from https://github.com/pybind/cmake_example/blob/master/setup.py
+"""
 
+BASEDIR = Path(__file__).parent
+CONFIG = sysconfig.get_config_vars()
+PY_MAJ = '@Python_VERSION_MAJOR@'
+PY_MIN = '@Python_VERSION_MINOR@'
+
+# Convert distutils Windows platform specifiers to CMake -A arguments
+PLAT_TO_CMAKE = {
+    "win32": "Win32",
+    "win-amd64": "x64",
+    "win-arm32": "ARM",
+    "win-arm64": "ARM64",
+}
 
 class CMakeExtension(Extension):
-    sourcedir = Path(BASEDIR).absolute()
+    def __init__(self, name, sourcedir=""):
+        super().__init__(name, sources=[])
+        self.sourcedir = os.path.abspath(sourcedir)
 
-    def __init__(self, name):
-        super().__init__(name, [])
 
+def get_python_lib(platform: str, lib_dirs):
+    lib_path = None
+    if platform == 'Windows':
+        for d in lib_dirs:
+            d = Path(d)
+            if not d.exists():
+                continue
+            for f in d.iterdir():
+                if f.name == f'python{PY_MAJ}{PY_MIN}.lib':
+                    lib_path = d / f
+    else:
+        lib_path = Path("{}/{}".format(CONFIG['LIBDIR'], CONFIG['LDLIBRARY']))
 
-def get_python_lib():
-    return Path("{}/{}".format(CONFIG['LIBDIR'], CONFIG['LDLIBRARY']))
+    if not lib_path:
+        raise ValueError(f"Couldn't find libpython path for platform {platform}")
 
+    return lib_path
 
 def get_python_include():
     return get_paths()['platinclude']
 
 
 class CMakeBuild(build_ext):
-    def run(self):
-        try:
-            out = subprocess.check_output(['cmake', '--version'])
-        except OSError:
-            raise RuntimeError("CMake must be installed to build the following extensions: " +
-                               ", ".join(e.name for e in self.extensions))
-
-        if platform.system() == "Windows":
-            cmake_version = LooseVersion(re.search(r'version\s*([\d.]+)', out.decode()).group(1))
-            if cmake_version < '3.12.0':
-                raise RuntimeError("CMake >= 3.12.0 is required on Windows")
-
-        for ext in self.extensions:
-            self.build_extension(ext)
-
     def build_extension(self, ext: Extension):
-        extdir = Path(self.get_ext_fullpath(ext.name)).parent.resolve()
+        plat = platform.system()
+        extdir = str(Path(self.get_ext_fullpath(ext.name)).parent.resolve())
+        if not extdir.endswith(os.path.sep):
+            extdir += os.path.sep
 
         tmp_path = Path(self.build_temp)
         if not tmp_path.exists():
-            tmp_path.mkdir()
+            tmp_path.mkdir(parents=True)
 
         if Path(tmp_path / 'CMakeFiles').exists():
             rmtree(str(tmp_path / 'CMakeFiles'))
         if Path(tmp_path / 'CMakeCache.txt').exists():
             os.remove(str(tmp_path / 'CMakeCache.txt'))
+        
+        cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
+        cfg = 'Debug' if self.debug else 'Release'
 
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}'.format(extdir),
                       '-DPython_EXECUTABLE={}'.format(sys.executable),
                       '-DPython_INCLUDE_DIRS={}'.format(get_python_include()),
-                      '-DPython_LIBRARIES={}'.format(get_python_lib()),
+                      '-DPython_LIBRARIES={}'.format(get_python_lib(plat, self.library_dirs)),
+                      '-DCMAKE_BUILD_TYPE={}'.format(cfg),
                       '-DENABLE_BENCHMARKS=OFF',
                       '-DENABLE_TESTS=OFF',
                       '-DENABLE_TOOLS=OFF',
                       '-DENABLE_SERVICES=OFF',
                       '-DENABLE_CCACHE=OFF',
                       '-DENABLE_BENCHMARKS=OFF']
-        cfg = 'Debug' if self.debug else 'Release'
-        build_args = ['--config', cfg]
-        cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+        build_args = []
 
         cpu_count = mp.cpu_count() if mp.cpu_count() < 4 else mp.cpu_count() - 1
-        build_args += ['--', "-j{}".format(cpu_count)]
+
+        if self.compiler.compiler_type != "msvc":
+            cmake_args += ["-GNinja"]
+            build_args += ['--', "-j{}".format(cpu_count)]
+        else:
+            # Single config generators are handled "normally"
+            single_config = any(x in cmake_generator for x in {"NMake", "Ninja"})
+
+            # CMake allows an arch-in-generator style for backward compatibility
+            contains_arch = any(x in cmake_generator for x in {"ARM", "Win64"})
+
+            # Specify the arch if using MSVC generator, but only if it doesn't
+            # contain a backward-compatibility arch spec already in the
+            # generator name.
+            if not single_config and not contains_arch:
+                cmake_args += ["-A", PLAT_TO_CMAKE[self.plat_name]]
+
+            if not single_config:
+                cmake_args += [
+                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
+                ]
+                build_args += ["--config", cfg]
+                build_args += ["--", f"/maxcpucount:{str(cpu_count)}"]
 
         env = os.environ.copy()
 
+        if env.get('VCPKG_TARGET_TRIPLET'):
+            cmake_args += ['-DVCPKG_TARGET_TRIPLET={}'.format(env['VCPKG_TARGET_TRIPLET'])]
+        if env.get('CMAKE_TOOLCHAIN_FILE'):
+            cmake_args += ['-DCMAKE_TOOLCHAIN_FILE={}'.format(env['CMAKE_TOOLCHAIN_FILE'])]
         if env.get('LUA_INCLUDE_DIR'):
             cmake_args += ['-DLUA_INCLUDE_DIR={}'.format(env['LUA_INCLUDE_DIR'])]
+        if env.get('LUA_LIBRARIES'):
+            cmake_args += ['-DLUA_LIBRARIES={}'.format(env['LUA_LIBRARIES'])]
 
-        subprocess.check_call(['cmake', '-GNinja', '-S{}'.format(ext.sourcedir)] + cmake_args, cwd=str(tmp_path), env=env)
+        subprocess.check_call(['cmake', '-S{}'.format(ext.sourcedir)] + cmake_args, cwd=str(tmp_path), env=env)
             
         # TODO: we need to remove all previously generated shared libraries from the build folder!
         so_path = tmp_path.joinpath("src", "bindings", "python", "valhalla")
@@ -95,16 +137,16 @@ class CMakeBuild(build_ext):
                 print("Removing shared lib: " + f.name)
                 f.unlink()
 
-        subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=str(tmp_path))
+        subprocess.check_call(['cmake', '--build', str(tmp_path.resolve().absolute())] + build_args)
 
 if sys.version_info < (3,5):
     raise RuntimeError("Python 3.5 or larger required.")
 
 setup(
-    ext_modules=[CMakeExtension('python_valhalla')],
-    packages=['valhalla'],
-    package_data={'valhalla': ['*.dll', '*.so', '*.dynlib']},
+    name="valhalla",
+    ext_modules=[CMakeExtension('valhalla')],
+    #package_data={'valhalla': ['*.dll', '*.so', '*.dynlib']},
     python_requires=">=3.5",
-    cmdclass=dict(build_ext=CMakeBuild, sdist=orig_sdist),
+    cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
 )

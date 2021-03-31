@@ -39,7 +39,8 @@ cmake -B build_python -G Ninja -DENABLE_TOOLS=OFF -DENABLE_SERVICES=OFF -DENABLE
 The `setup.py` will be available after a CMake step in the project root.
 
 1. Builds the project to `./build` and installs to `./dist` (**RUN TWICE** for some reason): `/opt/python/cp36-cp36m/bin/python3.6 setup.py bdist_wheel` and a wheel to `dist`
-2. For Linux, repair the wheel (copies missing libraries and renames the wheel): `auditwheel repair valhalla-3.1.0-cp36-cp36m-linux_x86_64.whl --plat manylinux_2_24_x86_64`
+2. For Linux, repair the wheel (copies missing libraries and renames the wheel): `auditwheel repair dist/valhalla-3.1.0-cp36-cp36m-linux_x86_64.whl --plat manylinux_2_24_x86_64`
+3. Find the wheel(s) in `./dist/wheelhouse`.
 
 Gotchas:
 - easiest with `setup.py` in the root directory!

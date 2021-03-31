@@ -62,8 +62,6 @@ class CMakeBuild(build_ext):
             rmtree(str(tmp_path / 'CMakeFiles'))
         if Path(tmp_path / 'CMakeCache.txt').exists():
             os.remove(str(tmp_path / 'CMakeCache.txt'))
-            
-        # TODO: we need to remove all previously generated shared libraries from the build folder!
 
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}'.format(extdir),
                       '-DPython_EXECUTABLE={}'.format(sys.executable),
@@ -87,8 +85,17 @@ class CMakeBuild(build_ext):
         if env.get('LUA_INCLUDE_DIR'):
             cmake_args += ['-DLUA_INCLUDE_DIR={}'.format(env['LUA_INCLUDE_DIR'])]
 
-        subprocess.check_call(['cmake', '-GNinja', '-S{}'.format(ext.sourcedir), '-B{}'.format(tmp_path)] + cmake_args, cwd=str(tmp_path), env=env)
-        subprocess.check_call(['cmake', '--build', str(tmp_path)] + build_args, cwd=str(tmp_path))
+        subprocess.check_call(['cmake', '-GNinja', '-S{}'.format(ext.sourcedir)] + cmake_args, cwd=str(tmp_path), env=env)
+            
+        # TODO: we need to remove all previously generated shared libraries from the build folder!
+        so_path = tmp_path.joinpath("src", "bindings", "python", "valhalla")
+
+        for f in so_path.iterdir():
+            if f.suffix in ('.so', '.dylib', '.dll') and 'python_valhalla' in f.name:
+                print("Removing shared lib: " + f.name)
+                f.unlink()
+
+        subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=str(tmp_path))
 
 if sys.version_info < (3,5):
     raise RuntimeError("Python 3.5 or larger required.")

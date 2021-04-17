@@ -119,9 +119,13 @@ class TestBindings(unittest.TestCase):
             "costing": "pedestrian",
             "contours": [
                     {
-                        'time': [1, 2]
+                        'time': 1
                     }, {
-                        'distance': [1, 2]
+                        'time': 5
+                    }, {
+                        'distance': 1
+                    }, {
+                        'distance': 5
                     }
             ],
             "show_locations": True
@@ -129,8 +133,7 @@ class TestBindings(unittest.TestCase):
 
         iso = Isochrone(query)
 
-        print(iso)
-
+        self.assertEqual(len(iso['features']), 6)  # 4 isochrones and the 2 point layers
 
     def test_7_change_config(self):
         c = config.get_default()

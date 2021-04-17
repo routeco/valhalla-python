@@ -314,13 +314,13 @@ if(ENABLE_SERVICES)
 endif()
 
 if(ENABLE_PYTHON_BINDINGS AND ENABLE_DATA_TOOLS)
-  find_package(PythonInterp)
+  find_package(Python COMPONENTS Interpreter)
   add_custom_command(OUTPUT python_valhalla.log
     COMMAND
       LOCPATH=${VALHALLA_SOURCE_DIR}/locales
       PYTHONPATH=${CMAKE_BINARY_DIR}/src/bindings/python
       ASAN_OPTIONS=verify_asan_link_order=0:detect_leaks=0
-      /bin/bash -c "cd ${VALHALLA_SOURCE_DIR}/test/bindings/python/ && ${PYTHON_EXECUTABLE} -m unittest test_utrecht.py > ${CMAKE_BINARY_DIR}/test/python_valhalla.log"
+      /bin/bash -cx "cd ${VALHALLA_SOURCE_DIR}/test/bindings/python/ && ${Python_EXECUTABLE} -m unittest test_utrecht.py > ${CMAKE_BINARY_DIR}/test/python_valhalla.log"
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     DEPENDS
       ${VALHALLA_SOURCE_DIR}/test/bindings/python/test_utrecht.py

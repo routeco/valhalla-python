@@ -18,18 +18,6 @@ namespace vm = valhalla::mjolnir;
 namespace vb = valhalla::baldr;
 namespace py = pybind11;
 
-class PythonGraphReader : public vb::GraphReader {
-public:
-  PythonGraphReader(const boost::property_tree::ptree& pt) : vb::GraphReader(pt, nullptr) {
-  }
-  std::shared_ptr<const GraphReader::tile_extract_t>
-  get_extract_instance(const boost::property_tree::ptree& pt) {
-    std::shared_ptr<const GraphReader::tile_extract_t> tile_extract(
-        new GraphReader::tile_extract_t(pt));
-    return tile_extract;
-  }
-};
-
 namespace {
 static std::unique_ptr<valhalla::tyr::actor_t> actor = nullptr;
 
@@ -45,7 +33,7 @@ const boost::property_tree::ptree& configure(const std::string& config_path = ""
 
   // only build config when called from binding's Configure!
   if (!config_path.empty()) {
-    // create the config on the filesystem via python
+    // create the config JSON on the filesystem via python and read it with rapidjson from file
     py::object create_config = py::module_::import("valhalla.config").attr("_create_config");
     bool changed = create_config(config_path, config, tile_dir, tile_extract, verbose).cast<bool>();
     try {
@@ -107,16 +95,17 @@ PYBIND11_MODULE(python_valhalla, m) {
   m.def("Configure", py_configure, py::arg("config_file"), py::arg("config") = py::dict(),
         py::arg("tile_dir") = "", py::arg("tile_extract") = "", py::arg("verbose") = true);
 
-  m.def("Route", [](const std::string req) { return actor->route(req); });
-  m.def("Locate", [](const std::string req) { return actor->locate(req); });
-  m.def("OptimizedRoute", [](const std::string req) { return actor->optimized_route(req); });
-  m.def("Matrix", [](const std::string req) { return actor->matrix(req); });
-  m.def("Isochrone", [](const std::string req) { return actor->isochrone(req); });
-  m.def("TraceRoute", [](const std::string req) { return actor->trace_route(req); });
-  m.def("TraceAttributes", [](const std::string req) { return actor->trace_attributes(req); });
-  m.def("Height", [](const std::string req) { return actor->height(req); });
-  m.def("TransitAvailable", [](const std::string req) { return actor->transit_available(req); });
-  m.def("Expansion", [](const std::string req) { return actor->expansion(req); });
+  m.def("_Route", [](const std::string req) { return actor->route(req); });
+  m.def("_Locate", [](const std::string req) { return actor->locate(req); });
+  m.def("_OptimizedRoute", [](const std::string req) { return actor->optimized_route(req); });
+  m.def("_Matrix", [](const std::string req) { return actor->matrix(req); });
+  m.def("_Isochrone", [](const std::string req) { return actor->isochrone(req); });
+  m.def("_TraceRoute", [](const std::string req) { return actor->trace_route(req); });
+  m.def("_TraceAttributes", [](const std::string req) { return actor->trace_attributes(req); });
+  m.def("_Height", [](const std::string req) { return actor->height(req); });
+  m.def("_TransitAvailable", [](const std::string req) { return actor->transit_available(req); });
+  m.def("_Expansion", [](const std::string req) { return actor->expansion(req); });
+  m.def("_Centroid", [](const std::string req) { return actor->centroid(req); });
 
   m.def("_BuildTiles", py_build_tiles);
 }

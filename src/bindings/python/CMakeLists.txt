@@ -20,7 +20,7 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/__init__.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/utils.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/config.py COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/_actor.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/_actor.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/_actions.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/_actions.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildtiles.py ${CMAKE_CURRENT_BINARY_DIR}/valhalla/buildtiles.py COPYONLY)
 configure_file(${VALHALLA_SOURCE_DIR}/scripts/valhalla_build_config ${CMAKE_CURRENT_BINARY_DIR}/valhalla/valhalla_build_config.py COPYONLY)
 

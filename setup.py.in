@@ -10,7 +10,10 @@ from sysconfig import get_paths
 import multiprocessing as mp
 from shutil import rmtree
 
-from setuptools import setup, Extension, find_packages
+try:
+    from setuptools import setup, Extension, find_packages
+except ImportError:
+    from distutils.core import setup, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
@@ -143,9 +146,10 @@ if sys.version_info < (3,5):
     raise RuntimeError("Python 3.5 or larger required.")
 
 setup(
-    name="valhalla",
-    ext_modules=[CMakeExtension('valhalla')],
-    #package_data={'valhalla': ['*.dll', '*.so', '*.dynlib']},
+    name="python_valhalla",
+    ext_modules=[CMakeExtension('python_valhalla')],
+    packages=find_packages(where=str(Path('$PWD/build/temp.linux-x86_64-3.6/src/bindings/python'))),
+    package_data={'valhalla': ['*.dll', '*.so', '*.dynlib']},
     python_requires=">=3.5",
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,

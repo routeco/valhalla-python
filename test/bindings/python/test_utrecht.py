@@ -6,7 +6,7 @@ from shutil import rmtree
 from pathlib import Path
 import unittest
 
-import valhalla
+from valhalla import *
 from valhalla import config
 from valhalla.utils import decode_polyline
 
@@ -33,33 +33,33 @@ class TestBindings(unittest.TestCase):
 
     def test_0_wrong_config_path(self):
         with self.assertRaises(ValueError) as e:
-            valhalla.Configure('/highway/to/hell')
+            Configure('/highway/to/hell')
             self.assertIn('No local config file found', str(e))
 
     # Needs to run before configuration was generated the first time
     def test_1_not_configured(self):
         with self.assertRaises(RuntimeError) as e:
-            a = valhalla.Actor()
+            Configure('')
             self.assertIn('The service was not configured', str(e))
 
     def test_2_no_pbfs(self):
-        valhalla.Configure(
+        Configure(
             str(self.config_path),
             config=config.get_default(),
             verbose=True
         )
         with self.assertRaises(ValueError) as e:
-            valhalla.BuildTiles([])
+            BuildTiles([])
             self.assertIn('No PBF files', str(e))
 
     def test_3_invalid_pbfs(self):
         # Valhalla's RuntimError for invalid data
         with self.assertRaises(RuntimeError) as e:
-            valhalla.BuildTiles(['blabla'])
+            BuildTiles(['blabla'])
             self.assertIn('No PBF files', str(e))
 
     def test_4_config(self):
-        valhalla.Configure(
+        Configure(
             str(self.config_path),
             config.get_default(),
             str(self.tiles_path),
@@ -78,14 +78,13 @@ class TestBindings(unittest.TestCase):
     
     def test_5_build_tiles(self):
         pbf_path = os.path.join(PWD.parent.parent, 'data', 'nyc.osm.pbf')
-        tar_path = Path(valhalla.BuildTiles([pbf_path]))
+        tar_path = Path(BuildTiles([pbf_path]))
 
         assert tar_path == self.tar_path
         assert tar_path.is_file()
         assert tar_path.stat().st_size > 10000  # actual produced a tar
 
     def test_6_route(self):
-        actor = valhalla.Actor()
 
         query = {
             "locations": [
@@ -95,7 +94,7 @@ class TestBindings(unittest.TestCase):
             "costing": "bicycle",
             "directions_options": {"language": "ru-RU"}
         }
-        route = actor.Route(query)
+        route = Route(query)
 
         assert('trip' in route)
         assert('units' in route['trip'] and route['trip']['units'] == 'kilometers')
@@ -103,26 +102,48 @@ class TestBindings(unittest.TestCase):
         assert('legs' in route['trip'] and len(route['trip']['legs']) > 0)
         assert('maneuvers' in route['trip']['legs'][0] and len(route['trip']['legs'][0]['maneuvers']) > 0)
         assert('instruction' in route['trip']['legs'][0]['maneuvers'][0])
-        assert(route['trip']['legs'][0]['maneuvers'][0]['instruction'] == u'Двигайтесь на юг по Hudson River Greenway.')
 
-        route_str = actor.Route(json.dumps(query, ensure_ascii=False))
+        assert(route['trip']['legs'][0]['maneuvers'][0]['instruction'] == u'Двигайтесь по юг по Hudson River Greenway.')
+
+        route_str = Route(json.dumps(query, ensure_ascii=False))
         assert isinstance(route_str, str)
         # C++ JSON string has no whitespace, so need to make it jsony
         assert json.dumps(route) == json.dumps(json.loads(route_str))
+    
+    def test_7_isochrone(self):
+
+        query = {
+            "locations": [
+                {"lat": 40.75120639, "lon": -74.00242363}
+            ],
+            "costing": "pedestrian",
+            "contours": [
+                    {
+                        'time': [1, 2]
+                    }, {
+                        'distance': [1, 2]
+                    }
+            ],
+            "show_locations": True
+        }
+
+        iso = Isochrone(query)
+
+        print(iso)
+
 
     def test_7_change_config(self):
         c = config.get_default()
         c['service_limits']['bicycle']['max_distance'] = 1
-        valhalla.Configure(
+        Configure(
             str(self.config_path),
             c,
             str(self.tiles_path),
             str(self.tar_path)
         )
 
-        actor = valhalla.Actor()
         with self.assertRaises(RuntimeError) as e:
-            actor.Route(json.dumps({"locations":[{"lat":52.08813,"lon":5.03231},{"lat":52.09987,"lon":5.14913}],"costing":"bicycle","directions_options":{"language":"ru-RU"}}))
+            Route(json.dumps({"locations":[{"lat":52.08813,"lon":5.03231},{"lat":52.09987,"lon":5.14913}],"costing":"bicycle","directions_options":{"language":"ru-RU"}}))
             self.assertIn('exceeds the max distance limit', str(e))
 
     def test_8_decode_polyline(self):

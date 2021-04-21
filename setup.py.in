@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import time
+import json
 import platform
 import subprocess
 from pathlib import Path
@@ -37,7 +38,7 @@ PLAT_TO_CMAKE = {
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=""):
         super().__init__(name, sources=[])
-        self.sourcedir = os.path.abspath(sourcedir)
+        self.sourcedir = str(BASEDIR.resolve().absolute())
 
 
 def get_python_lib(platform: str, lib_dirs):
@@ -68,6 +69,9 @@ class CMakeBuild(build_ext):
         extdir = str(Path(self.get_ext_fullpath(ext.name)).parent.resolve())
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
+        
+        # make sure all builds happen in the same dir to be re-used
+        self.build_temp = str(Path(self.build_temp).parent / "py_build")
 
         tmp_path = Path(self.build_temp)
         if not tmp_path.exists():
@@ -131,26 +135,41 @@ class CMakeBuild(build_ext):
             cmake_args += ['-DLUA_LIBRARIES={}'.format(env['LUA_LIBRARIES'])]
 
         subprocess.check_call(['cmake', '-S{}'.format(ext.sourcedir)] + cmake_args, cwd=str(tmp_path), env=env)
-            
-        # TODO: we need to remove all previously generated shared libraries from the build folder!
+        
+        # we need to remove all previously generated shared libraries from the build folder!
         so_path = tmp_path.joinpath("src", "bindings", "python", "valhalla")
-
+        
         for f in so_path.iterdir():
             if f.suffix in ('.so', '.dylib', '.dll') and 'python_valhalla' in f.name:
-                print("Removing shared lib: " + f.name)
+                print(f"\nRemoving shared lib: {f.name}\n")
                 f.unlink()
 
         subprocess.check_call(['cmake', '--build', str(tmp_path.resolve().absolute())] + build_args)
 
-if sys.version_info < (3,5):
-    raise RuntimeError("Python 3.5 or larger required.")
+if sys.version_info < (3, 6):
+    raise RuntimeError("Python 3.6 or larger required.")
 
+# Before all else remove the lib.<platform> dir to get rid of previous build shared lib
+lib_path = BASEDIR / 'build'
+for d in lib_path.iterdir():
+    if 'lib.' in str(d.resolve()):
+        rmtree(str(d))
+        print(f"\nRemoved the lib dir {d}\n")
+
+# it's pretty confusing: on first cmake build this will fail the build, since it can't
+# find a package in the new build folder (checks very first to copy everything from the
+# build folder!!). After the first build there will be package in the build dir, so the 
+# second build can copy the files as first action. The subsequent build is bullocks 
+# actually. Maybe I'm just using it wrong.. 
+#
+# Long story short: ALWAYS build the bindings TWICE for each python version.
 setup(
-    name="python_valhalla",
-    ext_modules=[CMakeExtension('python_valhalla')],
-    packages=find_packages(where=str(Path('$PWD/build/temp.linux-x86_64-3.6/src/bindings/python'))),
-    package_data={'valhalla': ['*.dll', '*.so', '*.dynlib']},
-    python_requires=">=3.5",
+    name="valhalla",
+    ext_modules=[CMakeExtension('valhalla')],
+    package_dir={'': str(Path('build/py_build/src/bindings/python'))},
+    packages=find_packages(where=str(Path(f'build/py_build/src/bindings/python').resolve().absolute())),
+    package_data={'valhalla': ['*.dll', '*.so', '*.dylib']},
+    python_requires=">=3.6",
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
 )

@@ -71,7 +71,7 @@ class CMakeBuild(build_ext):
             extdir += os.path.sep
         
         # make sure all builds happen in the same dir to be re-used
-        self.build_temp = str(Path(self.build_temp).parent / "py_build")
+        self.build_temp = str(Path(ext.sourcedir) / "py_build")
 
         tmp_path = Path(self.build_temp)
         if not tmp_path.exists():
@@ -166,8 +166,8 @@ for d in lib_path.iterdir():
 setup(
     name="valhalla",
     ext_modules=[CMakeExtension('valhalla')],
-    package_dir={'': str(Path('build/py_build/src/bindings/python'))},
-    packages=find_packages(where=str(Path(f'build/py_build/src/bindings/python').resolve().absolute())),
+    package_dir={'': str(Path('py_build/src/bindings/python'))},
+    packages=find_packages(where=str(Path(f'py_build/src/bindings/python').resolve().absolute())),
     package_data={'valhalla': ['*.dll', '*.so', '*.dylib']},
     python_requires=">=3.6",
     cmdclass=dict(build_ext=CMakeBuild),

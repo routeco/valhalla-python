@@ -50,10 +50,22 @@ Gotchas:
 
 #### Build wheels
 
+**Python3.6 does not work**, some error in mjolnir/util.h.. Can't understand why, Python version shouldn't at all have an influence here..
+
 To be able to build with Ninja, we'd need to clone the Azure config, which I didn't try yet, saving that for CI.
 
 With MSVC:
 
 ```
-call .windows_env.bat && C:\Users\nilsn\AppData\Local\Programs\Python\Python39\python.exe setup.py bdist_wheel
+call .windows_env.bat & C:\Users\nilsn\AppData\Local\Programs\Python\Python39\python.exe setup.py bdist_wheel
+```
+
+Building multiple subsequent Python versions with MSVC (not Ninja) works well: 1-2 mins per build. I'd recommend starting with 3.7 and working our way up.
+
+#### Troubleshooting
+
+1. If it complains about CURL, then likely CMake chose the wrong architecture (x86): check which CXX compiler was used in the CMake configure step. Mostly a problem in VS Code's auto cmake step. Solution: use the VS 2019 dev cmd prompt with manual commands:
+
+```
+"C:\Program Files\CMake\bin\cmake.EXE" --no-warn-unused-cli -DENABLE_TOOLS:STRING=OFF -DENABLE_HTTP:STRING=OFF -DENABLE_DATA_TOOLS:STRING=ON -DENABLE_PYTHON_BINDINGS:STRING=ON -DENABLE_SERVICES:STRING=OFF -DENABLE_TESTS:STRING=OFF -DENABLE_CCACHE:STRING=OFF -DENABLE_COVERAGE:STRING=OFF -DENABLE_BENCHMARKS:STRING=OFF -DLUA_INCLUDE_DIR:STRING=C:\Users\nilsn\Documents\dev\vcpkg\installed\x64-windows\include\luajit -DLUA_LIBRARIES:STRING=C:\Users\nilsn\Documents\dev\vcpkg\installed\x64-windows\lib\lua51.lib -DPython_EXECUTABLE:STRING=C:\Users\nilsn\AppData\Local\Programs\Python\Python39 -DPython_LIBRARIES:STRING=C:\Users\nilsn\AppData\Local\Programs\Python\Python39\libs\python39.lib -DPython_INCLUDE_DIRS:STRING=C:\Users\nilsn\AppData\Local\Programs\Python\Python39\include -DCMAKE_TOOLCHAIN_FILE:STRING=C:\Users\nilsn\Documents\dev\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET:STRING=x64-windows -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -Hc:/Users/nilsn/Documents/dev/cpp/valhalla-python -Bc:/Users/nilsn/Documents/dev/cpp/valhalla-python/build -G "Visual Studio 16 2019" -T host=x64 -A win64
 ```

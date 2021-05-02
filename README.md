@@ -6,7 +6,7 @@ The improvements to Valhalla's native bindings are:
 
 - build routing tiles from Python API
 - easier configuration of Valhalla
-- re-configure the routing engine with different parameters (e.g. maximum limits)
+- re-configure the routing engine with different parameters (e.g. maximum limits) or change routing tiles
 - some utilities: decoding polylines (more planned)
 
 ## Planned Features
@@ -18,7 +18,7 @@ The improvements to Valhalla's native bindings are:
  
 `pip install valhalla`
 
-We package **wheels** for Win64, ~~MacOS X~~ (soon) and Linux distributions with `glibc>=2.24` (most modern systems, see [PEP 600](https://www.python.org/dev/peps/pep-0600/)). We **do not** offer a source distribution on PyPI. Please contact us on enquiry@gis-ops.com if you need support building the bindings for your platform.
+We package CPython 3.7, 3.8, 3.9 **wheels** for Win64, ~~MacOS X~~ (soon) and Linux distributions with `glibc>=2.24` (most modern systems, see [PEP 600](https://www.python.org/dev/peps/pep-0600/)). We **do not** offer a source distribution on PyPI. Please contact us on enquiry@gis-ops.com if you need support building the bindings for your platform.
 
 ## Usage
 

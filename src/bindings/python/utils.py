@@ -1,16 +1,9 @@
 from typing import List, Tuple
 
 
-def decode_polyline(polyline, precision=6, order='lnglat'):
-    """Decodes an encoded polyline string to a list of coordinates.
-
-    :param str polyline: An encoded polyline string.
-    :param int precision: The coordinate precision, default 6.
-    :param str order: Which order the coordinates are stored in, 'latlng' or 'lnglat'.
-
-    :returns: List of decoded coordinates in specified order.
-    :rtype: List[Tuple[float, float]]
-    """
+def decode_polyline(polyline: str, precision: int = 6, order: str = 'lnglat') -> List[Tuple[float, float]]:
+    """Decodes an encoded ``polyline`` string with ``precision`` to a list of coordinate tuples. 
+    The coordinate ``order`` of the output can be ``lnglat`` or ``latlng``."""
 
     return _decode(polyline, precision=precision, order=order, is3d=False)
 

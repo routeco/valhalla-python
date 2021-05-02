@@ -20,15 +20,15 @@ config = {
     'tile_url': optional(str),
     'tile_url_gz': optional(bool),
     'concurrency': optional(int),
-    'tile_dir': '/data/valhalla',
-    'tile_extract': '/data/valhalla/tiles.tar',
-    'traffic_extract': '/data/valhalla/traffic.tar',
+    'tile_dir': '',
+    'tile_extract': '',
+    'traffic_extract': '',
     'incident_dir': optional(str),
     'incident_log': optional(str),
     'shortcut_caching': optional(bool),
     'admin': '/data/valhalla/admin.sqlite',
     'timezone': '/data/valhalla/tz_world.sqlite',
-    'transit_dir': '/data/valhalla/transit',
+    'transit_dir': '',
     'transit_bounding_box': optional(str),
     'hierarchy': True,
     'shortcuts': True,
@@ -57,7 +57,7 @@ config = {
     }
   },
   'additional_data': {
-    'elevation': '/data/valhalla/elevation/'
+    'elevation': ''
   },
   'loki': {
     'actions':['locate','route','height','sources_to_targets','optimized_route','isochrone','trace_route','trace_attributes','transit_available', 'expansion', 'centroid', 'status'],

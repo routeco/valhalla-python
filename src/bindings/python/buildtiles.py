@@ -1,20 +1,19 @@
 from typing import List
 import tarfile
 from pathlib import Path
-import os
+from shutil import rmtree
 
-try:
-    from .python_valhalla import _BuildTiles
-except ModuleNotFoundError:
-    from python_valhalla import _BuildTiles
+from .python_valhalla import _BuildTiles, _reset_actor
 
 
-def BuildTiles(input_pbfs: List[str]):
+def BuildTiles(input_pbfs: List[str], cleanup: bool = True) -> str:
     """
-    Builds and tars the Valhalla tiles according to the config. Returns the path for the resulting tar file.
-
-    :param List[str] input_pbfs: The full paths to the PBF files to be processed.
+    Builds and tars the routing tiles from ``input_pbfs`` according to the config.
+    ``cleanup`` will remove the untarred tile files from mjolnir.tile_dir.
+    Returns the path of the tar file.
     """
+    from .config import _global_config
+
     if not input_pbfs:
         raise ValueError("No PBF files specified.")
 
@@ -22,24 +21,27 @@ def BuildTiles(input_pbfs: List[str]):
     if result is False:
         raise RuntimeError("Building tiles failed.")
 
-    return _tar_tiles()
-
-
-def _tar_tiles():
-    """Create a TAR ball at mjolnir.tile_extract from mjolnir.tile_dir"""
-    from .config import _global_config
-
-    # some sanity checks
-    if not _global_config:
-        raise RuntimeError("The service was not configured")
+    # Get the paths for the tiles
     tile_dir = Path(_global_config['mjolnir']['tile_dir'])
-    if not tile_dir.is_dir():
-        raise ValueError("mjolnir.tile_dir={} is not a directory".format(tile_dir))
     tile_extract = Path(_global_config['mjolnir']['tile_extract'])
     if not tile_extract.parent.exists():
-        raise ValueError("mjolnir.tile_extract={} is not inside an existing directory.".format(tile_extract))
+        raise ValueError("mjolnir.tile_extract={} is not inside an existing directory.".format(tile_extract.resolve()))
+
+    tar_path = _tar_tiles(tile_dir, tile_extract, cleanup)
+
+    _reset_actor()
+
+    return tar_path
+
+
+def _tar_tiles(tile_dir: Path, tile_extract: Path, cleanup: bool):
+    """Create a TAR ball at mjolnir.tile_extract from mjolnir.tile_dir"""
+    tile_dir_str = str(tile_dir.resolve())
 
     with tarfile.open(tile_extract, 'w') as tar:
-        tar.add(tile_dir, arcname=os.path.basename(tile_dir))
+        tar.add(tile_dir_str, arcname=tile_dir.name)
 
-    return str(tile_extract)
+    if cleanup:
+        rmtree(tile_dir_str)
+
+    return str(tile_extract.resolve())

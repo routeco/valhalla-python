@@ -72,3 +72,6 @@ site/
 /setup.py
 /setup.cfg
 dist/
+*egg-info
+wheelhouse
+

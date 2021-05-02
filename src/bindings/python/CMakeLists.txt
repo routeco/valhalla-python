@@ -5,15 +5,8 @@ target_link_libraries(python_valhalla PUBLIC valhalla)
 set_target_properties(python_valhalla PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/valhalla)
 set_target_properties(valhalla PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# determine platform tag
-
-if (APPLE)
-  set(PLATFORM darwin)
-elseif(WIN32)
-  set(PLATFORM win32)
-elseif(UNIX)
-  set(PLATFORM linux-gnu)
-endif()
+# Time for python version template
+string(TIMESTAMP TODAY "%Y.%m.%d")
 
 # build the python lib in bin dir
 # needs to be configure_file, otherwise changes to py files are not detected

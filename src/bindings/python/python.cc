@@ -23,11 +23,9 @@ static std::unique_ptr<valhalla::tyr::actor_t> actor = nullptr;
 
 // statically set the config file and configure logging, throw if you never configured
 // configuring multiple times is possible, e.g. to change service_limits
-// TODO: make this threadsafe just in case its abused
 const boost::property_tree::ptree& configure(const std::string& config_path = "",
-                                             py::dict config = {},
-                                             const std::string& tile_dir = "",
                                              const std::string& tile_extract = "",
+                                             py::dict config = {},
                                              bool verbose = true) {
   static boost::property_tree::ptree pt;
 
@@ -35,7 +33,7 @@ const boost::property_tree::ptree& configure(const std::string& config_path = ""
   if (!config_path.empty()) {
     // create the config JSON on the filesystem via python and read it with rapidjson from file
     py::object create_config = py::module_::import("valhalla.config").attr("_create_config");
-    bool changed = create_config(config_path, config, tile_dir, tile_extract, verbose).cast<bool>();
+    create_config(config_path, tile_extract, config, verbose).cast<bool>();
     try {
       // parse the config
       boost::property_tree::ptree temp_pt;
@@ -52,9 +50,8 @@ const boost::property_tree::ptree& configure(const std::string& config_path = ""
         valhalla::midgard::logging::Configure(logging_config);
       }
     } catch (...) { throw std::runtime_error("Failed to load config from: " + config_path); }
-    if (changed) {
-      actor.reset(new valhalla::tyr::actor_t(pt, true));
-    }
+    // reset the actor
+    actor.reset(new valhalla::tyr::actor_t(pt, true));
   }
 
   // if it turned out no one ever configured us we throw
@@ -66,11 +63,10 @@ const boost::property_tree::ptree& configure(const std::string& config_path = ""
 }
 
 void py_configure(const std::string& config_file,
-                  py::dict config,
-                  const std::string& tile_dir,
                   const std::string& tile_extract,
+                  py::dict config,
                   bool verbose) {
-  configure(config_file, std::move(config), tile_dir, tile_extract, verbose);
+  configure(config_file, tile_extract, std::move(config), verbose);
 }
 
 bool py_build_tiles(const std::vector<std::string>& input_pbfs) {
@@ -83,17 +79,25 @@ bool py_build_tiles(const std::vector<std::string>& input_pbfs) {
   bool result = vm::build_tile_set(pt, input_pbfs, vm::BuildStage::kInitialize,
                                    vm::BuildStage::kCleanup, false);
 
-  if (result) {
-    actor.reset(new valhalla::tyr::actor_t(pt, true));
-  }
-
   return result;
+}
+
+void reset_actor() {
+  auto pt = configure();
+  actor.reset(new valhalla::tyr::actor_t(pt, true));
 }
 } // namespace
 
 PYBIND11_MODULE(python_valhalla, m) {
-  m.def("Configure", py_configure, py::arg("config_file"), py::arg("config") = py::dict(),
-        py::arg("tile_dir") = "", py::arg("tile_extract") = "", py::arg("verbose") = true);
+  m.def("Configure", py_configure, py::arg("config_file"), py::arg("tile_extract"),
+        py::arg("config") = py::dict(), py::arg("verbose") = true,
+        "Configure Valhalla with the path to a ``config_file`` JSON.\n"
+        "If the file path doesn't exist one will be created at the "
+        "specified path, either with the ``config`` dict or, if no ``config`` specified, the default config "
+        "from ``valhalla.config.get_default()``.\nIf you pass a ``config`` dict and the file path "
+        "exists, the file will be overwritten\n``"
+        "``tile_extract`` is the path to an existing valhalla_tiles.tar graph or the path "
+        "``valhalla.BuildTiles()`` will put the tarred graph to.\n``verbose`` prints Valhalla's log.");
 
   m.def("_Route", [](const std::string req) { return actor->route(req); });
   m.def("_Locate", [](const std::string req) { return actor->locate(req); });
@@ -108,4 +112,5 @@ PYBIND11_MODULE(python_valhalla, m) {
   m.def("_Centroid", [](const std::string req) { return actor->centroid(req); });
 
   m.def("_BuildTiles", py_build_tiles);
+  m.def("_reset_actor", reset_actor);
 }

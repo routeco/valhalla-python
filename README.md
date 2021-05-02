@@ -1,71 +1,83 @@
-# Valhalla Python
+# Valhalla for Python
 
-This repo only exists to build better Python bindings and package them for the most common platforms as wheels.
+This spin-off project simply offers improved Python bindings to the fantastic [Valhalla project](https://github.com/valhalla/valhalla). 
+
+The improvements to Valhalla's native bindings are:
+
+- build routing tiles from Python API
+- easier configuration of Valhalla
+- re-configure the routing engine with different parameters (e.g. maximum limits)
+- some utilities: decoding polylines (more planned)
+
+## Planned Features
+
+- [ ] Download tile packs for Valhalla
+- [ ] Download admin & timezone DBs
 
 ## Installation
+ 
+`pip install valhalla`
 
-### Linux
+We package **wheels** for Win64, ~~MacOS X~~ (soon) and Linux distributions with `glibc>=2.24` (most modern systems, see [PEP 600](https://www.python.org/dev/peps/pep-0600/)). We **do not** offer a source distribution on PyPI. Please contact us on enquiry@gis-ops.com if you need support building the bindings for your platform.
 
-Hardest of them all.. I opted for the [`manylinux_2_24`](https://www.python.org/dev/peps/pep-0600/) which results in compatible builds for all `x86_x64` platforms (hopefully). The image is based on Debian 9, which has all dependencies packaged. Further details on compatibility are [here](https://github.com/pypa/manylinux#manylinux).
+## Usage
 
-#### Pull docker image
+Typically you'd take these steps:
 
-I needed to modify the default Docker image for the `manylinux_2_24_x86_64` to keep the Python dev libraries (for `pybind11` linking):
+### 1. Configure Valhalla
 
-`docker pull ghcr.io/gis-ops/manylinux_2_24_x86_64:keep_dev_libs`
+Valhalla expects a config JSON to know where to put the routing tiles, applying service limits etc. If you don't have an existing Valhalla JSON, one will be created for you at the specified path. If you don't specify your own `config` dictionary and the config JSON doesn't exist, the default will apply from `valhalla.config.get_default()`. If the config JSON does exist and `config` is specified, the config file will be overwritten.
 
-#### Install dependencies
+**Note**, if you want to change parameters or the routing tiles, you'll need to call `Configure()` again with the new parameters.
 
-```
-apt-get install -y \
-  ninja-build  # v1.7.2 \
-  libboost-dev-all  # v1.62 \
-  libspatialite-dev  # v4.3.0a \
-  libprotobuf-dev  # v3.0.0 \
-  libgeos-dev  # v3.5.1 \
-  libluajit-5.1-dev  # v5.1.2 \
-  libcurl4-openssl-dev  # 7.52.1
-```
+```python
+from valhalla import Configure, config
 
-#### Configure build
-
-```
-cd valhalla
-cmake -B build -G Ninja -DENABLE_TOOLS=OFF -DENABLE_SERVICES=OFF -DENABLE_TESTS=OFF -DENABLE_BENCHMARKS=OFF -DGEOS_INCLUDE_DIR=/usr/include/geos -DGEOS_LIB=/usr/lib/x86_64-linux-gnu/libgeos-3.5.1.so -DGEOS_C_LIB=/usr/lib/x86_64-linux-gnu/libgeos_c.so.1.9.1 -DPython_LIBRARIES=/opt/python/cp36-cp36m/lib/libpython3.6m.a -DPython_INCLUDE_DIRS=/opt/python/cp36-cp36m/include/python3.6m -DPython_EXECUTABLE=/opt/python/cp36-cp36m/bin/python3.6
+# Will create valhalla.json with the default configuration
+Configure('./valhalla.json', './valhalla_tiles.tar', verbose=True)
+# or pass a configuration explicitly: good for changing defaults
+conf = config.get_default()
+conf['mjolnir']['tile_dir'] = './'
+conf['mjolnir']['service_limits']['bicycle']['max_locations'] = 500
+Configure('./valhalla.json', './valhalla_tiles.tar', conf)
 ```
 
-#### Build wheels
+### 2. Build Tiles
 
-The `setup.py` will be available after a CMake step in the project root.
+If `./valhalla_tiles.tar` is not an existing tile pack, you'll have to build the routing tiles first. Download one or multiple OSM PBF files (e.g. from [Geofabrik](https://download.geofabrik.de)) and pass a list of the file paths to `valhalla.BuildTiles()`. This will create tile files at `mjolnir.tile_dir` path from the configuation (default a temporary path) and tar up all tiles to the file path at `mjolnir.tile_extract`. If `cleanup` is `True` (default) the tile files will be deleted automatically.
 
-1. Builds the project to `./build` and installs to `./dist` (**RUN TWICE** for some reason): `/opt/python/cp36-cp36m/bin/python3.6 setup.py bdist_wheel` and a wheel to `dist`
-2. For Linux, repair the wheel (copies missing libraries and renames the wheel): `auditwheel repair dist/valhalla-3.1.0-cp36-cp36m-linux_x86_64.whl --plat manylinux_2_24_x86_64`
-3. Find the wheel(s) in `./dist/wheelhouse`.
+**Note**, Windows users won't be able to use admin or timezone DBs currently due to a [bug in Valhalla](https://github.com/valhalla/valhalla/issues/3010).
 
-Gotchas:
-- easiest with `setup.py` in the root directory!
-- shared Python lib wasn't copied into the wheel, had to do setup.py's `package_data` trick
+```python
+from valhalla import BuildTiles
 
-### Windows
-
-#### Build wheels
-
-**Python3.6 does not work**, some error in mjolnir/util.h.. Can't understand why, Python version shouldn't at all have an influence here..
-
-To be able to build with Ninja, we'd need to clone the Azure config, which I didn't try yet, saving that for CI.
-
-With MSVC:
-
-```
-call .windows_env.bat & C:\Users\nilsn\AppData\Local\Programs\Python\Python39\python.exe setup.py bdist_wheel
+# Will print the log to stdout if Configure() was called with verbose=True
+BuildTiles(['./andorra-latest.osm.pbf'])
+tar_pat = Path('./valhalla_tiles.tar')
+assert tar_path.exists()
+assert tar_path.stat().st_size > 10000  # file size > 10 kB
 ```
 
-Building multiple subsequent Python versions with MSVC (not Ninja) works well: 1-2 mins per build. I'd recommend starting with 3.7 and working our way up.
+### 3. Execute action (Route/Isochrone/Matrix etc.)
 
-#### Troubleshooting
+After you configured the service and if there are routable tiles you can call any of the Valhalla actions (see `loki.actions` for a list). The actions support the same format as a Valhalla HTTP API request, either as `dict` or as `str`.
 
-1. If it complains about CURL, then likely CMake chose the wrong architecture (x86): check which CXX compiler was used in the CMake configure step. Mostly a problem in VS Code's auto cmake step. Solution: use the VS 2019 dev cmd prompt with manual commands:
+Valhalla encodes the geometry for a routing request with [Google's polyline algorithm](https://developers.google.com/maps/documentation/utilities/polylinealgorithm) and a precision of 6. For convenience, we included a polyline decoder in `valhalla.utils.decode_polyline()`.
 
+```python
+import json
+from valhalla import Route, utils
+
+query = {"locations": [{"lat": 42.560225, "lon": 1.575251}, {"lat": 42.553396, "lon": 1.541176}], "costing": "auto", "directions_options": {"language": "ru-RU"}}
+route = Route(query)
+
+json.dumps(route, indent=2)
+
+# Get the geometry as coordinate array, default in [lng, lat] order
+coords = utils.decode_polyline(route['trip']['legs'][0]['shape'], order='latlng')
+print(coords)
 ```
-"C:\Program Files\CMake\bin\cmake.EXE" --no-warn-unused-cli -DENABLE_TOOLS:STRING=OFF -DENABLE_HTTP:STRING=OFF -DENABLE_DATA_TOOLS:STRING=ON -DENABLE_PYTHON_BINDINGS:STRING=ON -DENABLE_SERVICES:STRING=OFF -DENABLE_TESTS:STRING=OFF -DENABLE_CCACHE:STRING=OFF -DENABLE_COVERAGE:STRING=OFF -DENABLE_BENCHMARKS:STRING=OFF -DLUA_INCLUDE_DIR:STRING=C:\Users\nilsn\Documents\dev\vcpkg\installed\x64-windows\include\luajit -DLUA_LIBRARIES:STRING=C:\Users\nilsn\Documents\dev\vcpkg\installed\x64-windows\lib\lua51.lib -DPython_EXECUTABLE:STRING=C:\Users\nilsn\AppData\Local\Programs\Python\Python39 -DPython_LIBRARIES:STRING=C:\Users\nilsn\AppData\Local\Programs\Python\Python39\libs\python39.lib -DPython_INCLUDE_DIRS:STRING=C:\Users\nilsn\AppData\Local\Programs\Python\Python39\include -DCMAKE_TOOLCHAIN_FILE:STRING=C:\Users\nilsn\Documents\dev\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET:STRING=x64-windows -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -Hc:/Users/nilsn/Documents/dev/cpp/valhalla-python -Bc:/Users/nilsn/Documents/dev/cpp/valhalla-python/build -G "Visual Studio 16 2019" -T host=x64 -A win64
-```
+
+## Known limitations
+
+- Windows users won't be able to build tiles with support for admin & timezone DBs (see https://github.com/valhalla/valhalla/issues/3010)

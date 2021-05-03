@@ -1,5 +1,9 @@
+Valhalla core:
 Duane Gearhart <duane@mapzen.com>
 Greg Knisely <greg@mapzen.com>
 Kevin Kreiser <kevinkreiser@gmail.com>
 Kristen DiLuca <kristen@mapzen.com>
 Dave Nesbitt <dave@mapzen.com>
+
+Most of the Python bindings in this project:
+Nils Nolde <nils@gis-ops.com>

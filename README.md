@@ -9,6 +9,8 @@ The improvements to Valhalla's native bindings are:
 - re-configure the routing engine with different parameters (e.g. maximum limits)
 - some utilities: decoding polylines (more planned)
 
+> Disclaimer: This is a third-party clone of Valhalla where (almost) only Python related code was changed. We regularly merge the Valhalla core to stay up-to-date.
+
 ## Planned Features
 
 - [ ] Download tile packs for Valhalla
@@ -81,3 +83,7 @@ print(coords)
 ## Known limitations
 
 - Windows users won't be able to build tiles with support for admin & timezone DBs (see https://github.com/valhalla/valhalla/issues/3010)
+
+## Release pattern
+
+Releases of the Python wheels on PyPI will have the pattern `<bindings_version>-<YYYY-MM-DD>`, where the date information is relating to the merge date of Valhalla core (approx. midnight CE(S)T). We're planning to merge Valhalla core code once a month, unless there's critical bug fixes.

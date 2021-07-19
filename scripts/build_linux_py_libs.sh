@@ -3,7 +3,7 @@
 set -eu
 
 function usage() {
-	echo "Usage: valhalla_path python_minor_version, e.g. ./build_linux_py_libs.sh $PWD 9"
+	echo "Usage: valhalla_path python_minor_version cleanup_bool, e.g. ./build_linux_py_libs.sh $PWD 9 false"
 	exit 1
 }
 
@@ -13,6 +13,7 @@ function find_files() {
 
 valhalla_src=$1
 py_min=$2
+cleanup=$3
 
 py_allowed="7 8 9"
 if [[ ! ${py_allowed} == *"${py_allowed}"* ]]; then
@@ -22,11 +23,14 @@ fi
 
 # first clean up a little
 pip uninstall -y valhalla
-if  [[ ! -z $(find_files ${valhalla_src}/wheelhouse) ]]; then
-  rm ${valhalla_src}/wheelhouse/*
-fi
-if  [[ ! -z $(find_files ${valhalla_src}/dist) ]]; then
-  rm ${valhalla_src}/dist/*
+
+if [[ $cleanup == "true" ]]; then
+  if  [[ ! -z $(find_files ${valhalla_src}/wheelhouse) ]]; then
+    rm ${valhalla_src}/wheelhouse/*
+  fi
+  if  [[ ! -z $(find_files ${valhalla_src}/dist) ]]; then
+    rm ${valhalla_src}/dist/*
+  fi
 fi
 
 # determine the python version and the directory to use

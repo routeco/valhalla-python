@@ -47,7 +47,7 @@ case ${py_min} in
 esac
 
 # run manylinux container
-container=$(docker run -dt --name python-valhalla-linux -v ${valhalla_src}:/valhalla registry.gitlab.com/gis-ops/manylinux:incl_dev_libs)
+container=$(docker run -dt --name python-valhalla-linux -v ${valhalla_src}:/valhalla ghcr.io/gis-ops/manylinux:valhalla_py)
 
 # remember: build twice
 docker exec ${container} /bin/bash -c "cd /valhalla && /opt/python/${py_dir}/bin/python3.${py_min} setup.py bdist_wheel"

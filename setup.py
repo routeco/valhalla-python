@@ -24,8 +24,8 @@ Contains partly code taken from pyosmium, partly from https://github.com/pybind/
 
 BASEDIR = Path(__file__).parent
 CONFIG = sysconfig.get_config_vars()
-PY_MAJ = '@Python_VERSION_MAJOR@'
-PY_MIN = '@Python_VERSION_MINOR@'
+PY_MAJ = sys.version_info.major
+PY_MIN = sys.version_info.minor
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
@@ -146,8 +146,8 @@ class CMakeBuild(build_ext):
 
         subprocess.check_call(['cmake', '--build', str(tmp_path.resolve().absolute())] + build_args)
 
-if sys.version_info < (3, 6):
-    raise RuntimeError("Python 3.6 or larger required.")
+if sys.version_info < (3, 7):
+    raise RuntimeError("Python 3.7 or larger required.")
 
 # Before all else remove the lib.<platform> dir to get rid of previous build shared lib
 lib_path = BASEDIR / 'build'
@@ -165,6 +165,7 @@ for d in lib_path.iterdir():
 # Long story short: ALWAYS build the bindings TWICE for each python version.
 setup(
     name="valhalla",
+    version=time.strftime("%d-%m-%Y"),
     ext_modules=[CMakeExtension('valhalla')],
     package_dir={'': str(Path('py_build/src/bindings/python'))},
     packages=find_packages(where=str(Path(f'py_build/src/bindings/python').resolve().absolute())),

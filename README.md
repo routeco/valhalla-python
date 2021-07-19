@@ -7,6 +7,7 @@ The improvements to Valhalla's native bindings are:
 - build routing tiles from Python API
 - easier configuration of Valhalla
 - re-configure the routing engine with different parameters (e.g. maximum limits) or change routing tiles
+- more pythonic way for requesting via `dict` objects instead of `str`
 - some utilities: decoding polylines (more planned)
 
 > Disclaimer: This is a third-party clone of Valhalla where (almost) only Python related code was changed. We regularly merge the Valhalla core to stay up-to-date.

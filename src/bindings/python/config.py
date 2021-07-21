@@ -12,9 +12,14 @@ def get_default() -> dict:
     """Returns the default Valhalla configuration."""
     from .valhalla_build_config import config as _config, optional as _optional
     c = _config.copy()
-    for k, v in c['mjolnir'].items():
-        if isinstance(v, _optional):
-            c['mjolnir'][k] = ""
+
+    # replace the "optional" values we get back from the config generator
+    # for optional str "", for optional int 0
+    for section in ("mjolnir", "statsd"):
+        for k, v in c[section].items():
+            if isinstance(v, _optional):
+                c[section][k] = ""
+
     return c
 
 

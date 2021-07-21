@@ -28,7 +28,7 @@ Big help as well: https://stackoverflow.com/a/51575996/2582935
 """
 
 PACKAGENAME = "valhalla"
-BASEDIR = Path(__file__).parent
+BASEDIR = Path(__file__).parent.resolve()
 CONFIG = sysconfig.get_config_vars()
 PY_MAJ = sys.version_info.major
 PY_MIN = sys.version_info.minor
@@ -103,7 +103,7 @@ class InstallCMakeLibs(install_lib):
 
         libs = filter(lambda p: p.is_file() and p.suffix in [".dll", ".so", ".dylib"] and not ("python" in p.name or PACKAGENAME in p.name), bin_dir.iterdir())
         for lib in libs:
-            shutil.move(lib, self.build_dir)
+            shutil.move(str(lib), self.build_dir)
 
         self.distribution.data_files = [str(lib)
                                         for lib in libs]
@@ -205,10 +205,10 @@ class CMakeBuild(build_ext):
         for p in lib_paths:
             try:
                 p = p.resolve()
-                shutil.move(p, lib_dir)
+                shutil.move(str(p), str(lib_dir))
                 print(f"copying {p.relative_to(BASEDIR)} -> {lib_dir.relative_to(BASEDIR)}")
             except:
-                continue
+                raise
 
 
 if sys.version_info < (3, 7):

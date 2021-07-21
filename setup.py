@@ -154,12 +154,12 @@ class CMakeBuild(build_ext):
         cpu_count = mp.cpu_count() if mp.cpu_count() < 4 else mp.cpu_count() - 1
 
         if platform.system() != "Windows":
-            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             cmake_args += ["-GNinja"]
             build_args += ['--', "-j{}".format(cpu_count)]
 
             bin_dir = build_dir.joinpath('src', 'bindings', 'python', 'valhalla')
         else:
+            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             # Single config generators are handled "normally"
             single_config = any(x in cmake_generator for x in {"NMake", "Ninja"})
 
@@ -179,8 +179,7 @@ class CMakeBuild(build_ext):
                 build_args += ["--config", cfg]
                 build_args += ["--", f"/maxcpucount:{str(cpu_count)}"]
 
-            bin_dir = build_dir.joinpath('bin', cfg)
-
+            bin_dir = build_dir
 
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
@@ -218,7 +217,7 @@ if sys.version_info < (3, 7):
 
 setup(
     name="valhalla",
-    version=time.strftime("%Y.%-m.%-d"),
+    version=time.strftime("%Y.%m.%d"),
     ext_modules=[CMakeExtension('valhalla')],
     packages=find_packages(),
     python_requires=">=3.7",

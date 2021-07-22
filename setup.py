@@ -156,8 +156,6 @@ class CMakeBuild(build_ext):
         if plat != "Windows":
             cmake_args += ["-GNinja"]
             build_args += ['--', "-j{}".format(cpu_count)]
-
-            lib_paths = filter(lambda p: p.is_file() and p.suffix in [".py", ".pyd", ".so", ".dylib"], bin_dir.iterdir())
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             # Single config generators are handled "normally"
@@ -178,9 +176,6 @@ class CMakeBuild(build_ext):
                 ]
                 build_args += ["--config", cfg]
                 build_args += ["--", f"/maxcpucount:{str(cpu_count)}"]
-            
-            # for windows we need to copy the .dlls from another directory, build/Release
-            lib_paths = filter(lambda p: p.is_file() and p.suffix in [".py", ".pyd", ".dll"], list(bin_dir.iterdir()) + list(build_dir.iterdir()))
 
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
@@ -200,7 +195,14 @@ class CMakeBuild(build_ext):
         
         self.distribution.bin_dir = str(bin_dir)  # no idea what that does..
 
-        # manually copy over the built files..        
+        # collect the built files..
+        if plat == 'Windows':
+            # for windows we need to copy the .dlls from another directory, build/Release
+            lib_paths = filter(lambda p: p.is_file() and p.suffix in [".py", ".pyd", ".dll"], list(bin_dir.iterdir()) + list(build_dir.iterdir()))
+        else:
+            lib_paths = filter(lambda p: p.is_file() and p.suffix in [".py", ".pyd", ".so", ".dylib"], bin_dir.iterdir())
+
+        # manually copy over the built files..
         for p in lib_paths:
             p = p.resolve()
             d = lib_dir.joinpath(p.name)
@@ -208,12 +210,6 @@ class CMakeBuild(build_ext):
                 d.unlink()
             shutil.move(str(p), str(d))
             print(f"copying {p.relative_to(BASEDIR)} -> {lib_dir.relative_to(BASEDIR)}")
-        
-        # on Windows also remove the root libs which are copied for some reason
-        if plat == 'Windows':
-            for p in bin_dir.iterdir():
-                if p.is_file() and p.suffix in ('.dll', '.pyd'):
-                    p.unlink()
 
 
 if sys.version_info < (3, 7):

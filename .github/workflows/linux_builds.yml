@@ -69,7 +69,7 @@ jobs:
           key: hashFiles('./.vcpkg_deps.txt')-${{ env.VCPKG_REF }}
 
       - name: Install Win deps
-        if: matrix.os == 'windows-2019'
+        if: matrix.os == 'windows-2019' && steps.cache_win.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/microsoft/vcpkg ${{ env.VCPKG_DIR }}
           git -C ${{ env.VCPKG_DIR }} checkout ${{ env.VCPKG_REF }}
@@ -92,5 +92,6 @@ jobs:
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
+        shell: bash
         with:
           path: ./wheelhouse/*.whl

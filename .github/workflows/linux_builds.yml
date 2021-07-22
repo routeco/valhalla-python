@@ -53,7 +53,7 @@ jobs:
         run: |
           brew install protobuf cmake ccache libtool boost libspatialite pkg-config luajit curl wget czmq lz4 spatialite-tools unzip
           pip3 install requests
-          git clone https://github.com/kevinkreiser/prime_server --recurse-submodules && cd prime_server && ./autogen.sh && ./configure && make -j4 && make install
+          git clone https://github.com/kevinkreiser/prime_server --recurse-submodules && pushd prime_server && ./autogen.sh && ./configure && make -j4 && make install && popd
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD:	cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64

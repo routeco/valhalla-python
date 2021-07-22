@@ -51,7 +51,7 @@ jobs:
       - name: Build Mac wheels
         if: matrix.os == 'macos-10.15'
         run: |
-          brew install protobuf cmake ccache libtool boost libspatialite pkg-config luajit curl wget czmq lz4 spatialite-tools unzip
+          brew install autoconf automake libtool protobuf cmake ccache libtool boost libspatialite pkg-config luajit curl wget czmq lz4 spatialite-tools unzip
           pip3 install requests
           git clone https://github.com/kevinkreiser/prime_server --recurse-submodules && pushd prime_server && ./autogen.sh && ./configure && make -j4 && make install && popd
           python -m cibuildwheel --output-dir wheelhouse

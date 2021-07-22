@@ -24,6 +24,8 @@ jobs:
         os: [ubuntu-20.04, macos-10.15]
     env:
       CIBW_ARCHS: x86_64
+      VCPKG_DIR: ${{ github.workspace }}\vcpkg
+      VCPKG_REF: 'f4bd6423'
 
     steps:
       - name: Checkout 
@@ -57,15 +59,37 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD:	cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64
-          CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
+          CIBW_TEST_COMMAND: ''
+
+      - name: Cache Win deps
+        if: matrix.os == 'windows-2019'
+        id: cache_win
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.VCPKG_DIR }}
+          key: hashFiles('./.vcpkg_deps.txt')-${{ env.VCPKG_REF }}
+
+      - name: Install Win deps
+        if: matrix.os == 'windows-2019'
+        run: |
+          git clone https://github.com/microsoft/vcpkg ${{ env.VCPKG_DIR }}
+          git -C ${{ env.VCPKG_DIR }} checkout ${{ env.VCPKG_REF }}
+          echo.set(VCPKG_BUILD_TYPE release)>> ${{ env.VCPKG_DIR }}\triplets\x64-windows.cmake
+          call ${{ env.VCPKG_DIR }}\bootstrap-vcpkg.bat
+          ${{ env.VCPKG_DIR }}\vcpkg.exe version
+        shell: cmd
 
       - name: Build Windows wheels
         if: matrix.os == 'windows-2019'
         run: python -m cibuildwheel --output-dir wheelhouse
+        shell: cmd
         env:
           CIBW_BUILD: cp37-win_amd64 cp38-win_amd64 cp39-win_amd64
           CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
           CIBW_ARCHS_WINDOWS: AMD64
+          CMAKE_TOOLCHAIN_FILE: ${{ env.VCPKG_DIR }}\scripts\buildsystems\vcpkg.cmake
+          LUA_INCLUDE_DIR: ${{ env.VCPKG_DIR }}\installed\%TRIPLET%-windows\include\luajit
+          LUA_LIBRARIES: ${{ env.VCPKG_DIR }}\installed\%TRIPLET%-windows\lib\lua51.lib
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

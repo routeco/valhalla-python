@@ -27,51 +27,48 @@ jobs:
       CIBW_ARCHS: x86_64
 
     steps:
-      name: Publish Linux Python packages
-      runs-on: ubuntu-latest
-      container: ghcr.io/gis-ops/manylinux:valhalla_py
-      steps:
-        - name: Checkout 
-          uses: actions/checkout@v2  
-          with:
-            submodules: recursive
-        - name: Install Python
-          uses: actions/setup-python@v2
-          with:
-            python-version: ${{ matrix.python-version }}
-
-        - name: Install cibuildwheel
-          run: python -m pip install cibuildwheel==2.0.0
-
-        - name: Build Linux wheels
-          if: matrix.os == 'ubuntu-20.04'
-          run: |
-            python -m cibuildwheel --output-dir wheelhouse
-          env:
-            CIBW_BUILD: cp37-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
-            CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/gis-ops/manylinux:valhalla_py
-            CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
+      - name: Checkout 
+        uses: actions/checkout@v2  
+        with:
+          submodules: recursive
           
-        - name: Build Mac wheels
-          if: matrix.os == 'macos-10.15'
-          run: |
-            brew install protobuf cmake ccache libtool boost libspatialite pkg-config luajit curl wget czmq lz4 spatialite-tools unzip
-            pip3 install requests
-            git clone https://github.com/kevinkreiser/prime_server --recurse-submodules && cd prime_server && ./autogen.sh && ./configure && make -j4 && make install
-            python -m cibuildwheel --output-dir wheelhouse
-          env:
-            CIBW_BUILD:	cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64
-            CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
-        - name: Build Windows wheels
-          if: matrix.os == 'windows-2019'
-          run: python -m cibuildwheel --output-dir wheelhouse
-          env:
-            CIBW_BUILD: cp37-win_amd64 cp38-win_amd64 cp39-win_amd64
-            CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
-            CIBW_ARCHS_WINDOWS: AMD64
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.0.0
 
-        - name: Upload artifacts
-          uses: actions/upload-artifact@v2
-          with:
-            path: ./wheelhouse/*.whl
+      - name: Build Linux wheels
+        if: matrix.os == 'ubuntu-20.04'
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD: cp37-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
+          CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/gis-ops/manylinux:valhalla_py
+          CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
+        
+      - name: Build Mac wheels
+        if: matrix.os == 'macos-10.15'
+        run: |
+          brew install protobuf cmake ccache libtool boost libspatialite pkg-config luajit curl wget czmq lz4 spatialite-tools unzip
+          pip3 install requests
+          git clone https://github.com/kevinkreiser/prime_server --recurse-submodules && cd prime_server && ./autogen.sh && ./configure && make -j4 && make install
+          python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD:	cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64
+          CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
+
+      - name: Build Windows wheels
+        if: matrix.os == 'windows-2019'
+        run: python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD: cp37-win_amd64 cp38-win_amd64 cp39-win_amd64
+          CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
+          CIBW_ARCHS_WINDOWS: AMD64
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl

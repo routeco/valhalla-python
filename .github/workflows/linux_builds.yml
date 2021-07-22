@@ -80,15 +80,19 @@ jobs:
 
       - name: Build Windows wheels
         if: matrix.os == 'windows-2019'
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: |
+          dir ${{ env.VCPKG_DIR }}\scripts\buildsystems
+          dir ${{ env.VCPKG_DIR }}\installed\%TRIPLET%-windows\include
+          dir test\bindings\python
+          python -m cibuildwheel --output-dir wheelhouse
         shell: cmd
         env:
           CIBW_BUILD: cp37-win_amd64 cp38-win_amd64 cp39-win_amd64
-          CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
+          CIBW_TEST_COMMAND: cd {project}\test\bindings\python & python -m unittest test_utrecht.py -v
           CIBW_ARCHS_WINDOWS: AMD64
           CMAKE_TOOLCHAIN_FILE: ${{ env.VCPKG_DIR }}\scripts\buildsystems\vcpkg.cmake
-          LUA_INCLUDE_DIR: ${{ env.VCPKG_DIR }}\installed\%TRIPLET%-windows\include\luajit
-          LUA_LIBRARIES: ${{ env.VCPKG_DIR }}\installed\%TRIPLET%-windows\lib\lua51.lib
+          LUA_INCLUDE_DIR: ${{ env.VCPKG_DIR }}\installed\x64-windows\include\luajit
+          LUA_LIBRARIES: ${{ env.VCPKG_DIR }}\installed\x64-windows\lib\lua51.lib
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

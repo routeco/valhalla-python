@@ -92,6 +92,5 @@ jobs:
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
-        shell: bash
         with:
           path: ./wheelhouse/*.whl

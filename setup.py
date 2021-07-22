@@ -125,10 +125,10 @@ class CMakeBuild(build_ext):
         super().run()
 
     def build_extension(self, ext: Extension):
-        plat = platform.system()
-        build_dir = Path(self.build_temp)
-        ext_dir = Path(self.get_ext_fullpath(ext.name)).parent.resolve()
-        lib_dir = ext_dir.joinpath(PACKAGENAME).resolve()
+        build_dir = Path(self.build_temp).resolve()  # the root of ./build/temp_xxx dir
+        ext_dir = Path(self.get_ext_fullpath(ext.name)).parent.resolve()  # where setuptools collects the built files before building the wheel 
+        lib_dir = ext_dir.joinpath(PACKAGENAME).resolve()  # the above + ./valhalla
+        bin_dir = build_dir.joinpath('src', 'bindings', 'python', 'valhalla').resolve()  # where the py sources are (and UNIX .so/.dylib)
         
         #if not ext_dir.endswith(os.path.sep):
         #    ext_dir += os.path.sep
@@ -136,11 +136,11 @@ class CMakeBuild(build_ext):
         build_dir.mkdir(parents=True, exist_ok=True)
         lib_dir.mkdir(parents=True, exist_ok=True)  # also creates ext_dir
 
+        plat = platform.system()
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
         cfg = 'Debug' if self.debug else 'Release'
 
-        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}'.format(ext_dir),
-                      '-DPython_EXECUTABLE={}'.format(sys.executable),
+        cmake_args = ['-DPython_EXECUTABLE={}'.format(sys.executable),
                       '-DPython_INCLUDE_DIRS={}'.format(get_python_include()),
                       '-DPython_LIBRARIES={}'.format(get_python_lib(plat, self.library_dirs)),
                       '-DENABLE_BENCHMARKS=OFF',
@@ -153,11 +153,11 @@ class CMakeBuild(build_ext):
 
         cpu_count = mp.cpu_count() if mp.cpu_count() < 4 else mp.cpu_count() - 1
 
-        if platform.system() != "Windows":
+        if plat != "Windows":
             cmake_args += ["-GNinja"]
             build_args += ['--', "-j{}".format(cpu_count)]
 
-            bin_dir = build_dir.joinpath('src', 'bindings', 'python', 'valhalla')
+            lib_paths = filter(lambda p: p.is_file() and p.suffix in [".py", ".pyd", ".so", ".dylib"], bin_dir.iterdir(build_dir))
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             # Single config generators are handled "normally"
@@ -174,12 +174,13 @@ class CMakeBuild(build_ext):
 
             if not single_config:
                 cmake_args += [
-                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), ext_dir)
+                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), lib_dir)
                 ]
                 build_args += ["--config", cfg]
                 build_args += ["--", f"/maxcpucount:{str(cpu_count)}"]
-
-            bin_dir = build_dir
+            
+            # for windows we need to copy the .dlls from another directory, build/Release
+            lib_paths = filter(lambda p: p.is_file() and p.suffix in [".py", ".pyd", ".dll"], list(bin_dir.iterdir()) + list(build_dir.iterdir()))
 
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
@@ -196,19 +197,23 @@ class CMakeBuild(build_ext):
                 
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
         subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
-
-        # manually copy over the built files..
-        self.distribution.bin_dir = str(bin_dir)
-
-        lib_paths = filter(lambda p: p.is_file() and p.suffix in [".py", ".pyd", ".so", ".dylib"], bin_dir.iterdir())
         
+        self.distribution.bin_dir = str(bin_dir)  # no idea what that does..
+
+        # manually copy over the built files..        
         for p in lib_paths:
-            try:
-                p = p.resolve()
-                shutil.move(str(p), str(lib_dir))
-                print(f"copying {p.relative_to(BASEDIR)} -> {lib_dir.relative_to(BASEDIR)}")
-            except:
-                raise
+            p = p.resolve()
+            d = lib_dir.joinpath(p.name)
+            if d.exists():
+                d.unlink()
+            shutil.move(str(p), str(d))
+            print(f"copying {p.relative_to(BASEDIR)} -> {lib_dir.relative_to(BASEDIR)}")
+        
+        # on Windows also remove the root libs which are copied for some reason
+        if plat == 'Windows':
+            for p in bin_dir.iterdir():
+                if p.is_file() and p.suffix in ('.dll', '.pyd'):
+                    p.unlink()
 
 
 if sys.version_info < (3, 7):

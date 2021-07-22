@@ -157,7 +157,7 @@ class CMakeBuild(build_ext):
             cmake_args += ["-GNinja"]
             build_args += ['--', "-j{}".format(cpu_count)]
 
-            lib_paths = filter(lambda p: p.is_file() and p.suffix in [".py", ".pyd", ".so", ".dylib"], bin_dir.iterdir(build_dir))
+            lib_paths = filter(lambda p: p.is_file() and p.suffix in [".py", ".pyd", ".so", ".dylib"], bin_dir.iterdir())
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             # Single config generators are handled "normally"

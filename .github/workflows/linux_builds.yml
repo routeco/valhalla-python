@@ -20,7 +20,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-10.15, windows-2019]
+        # os: [ubuntu-20.04, macos-10.15, windows-2019]
+        os: [windows-2019]
     env:
       CIBW_ARCHS: x86_64
       VCPKG_DIR: ${{ github.workspace }}\vcpkg
@@ -81,7 +82,7 @@ jobs:
       - name: Install Windows deps
         if: matrix.os == 'windows-2019' && steps.cache_win.outputs.cache-hit != 'true'
         run: |
-          ${{ env.VCPKG_DIR }}\vcpkg.exe install --triplet x64-windows "@.vcpkg_deps.txt"
+          ${{ env.VCPKG_DIR }}\vcpkg.exe install --triplet x64-windows '@.vcpkg_deps.txt'
         shell: cmd
 
       - name: Build Windows wheels

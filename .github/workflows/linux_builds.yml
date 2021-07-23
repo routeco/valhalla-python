@@ -82,16 +82,13 @@ jobs:
         if: matrix.os == 'windows-2019' && steps.cache_win.outputs.cache-hit != 'true'
         run: |
           ${{ env.VCPKG_DIR }}\vcpkg.exe install --triplet x64-windows "@.vcpkg_deps.txt"
-          ${{ env.VCPKG_DIR }}\vcpkg.exe list
-          if exist ${{ env.VCPKG_DIR }}\downloads rmdir /S /Q ${{ env.VCPKG_DIR }}\downloads
-          if exist ${{ env.VCPKG_DIR }}\packages rmdir /S /Q ${{ env.VCPKG_DIR }}\packages
         shell: cmd
 
       - name: Build Windows wheels
         if: matrix.os == 'windows-2019'
         run: |
           dir ${{ env.VCPKG_DIR }}\scripts\buildsystems
-          dir ${{ env.VCPKG_DIR }}\installed\%TRIPLET%-windows\include
+          dir ${{ env.VCPKG_DIR }}\installed\x64-windows\include
           dir test\bindings\python
           python -m cibuildwheel --output-dir wheelhouse
         shell: cmd

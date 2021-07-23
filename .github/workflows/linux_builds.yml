@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         # os: [ubuntu-20.04, macos-10.15, windows-2019]
-        os: [windows-2019]
+        os: [ubuntu-20.04, macos-10.15]
     env:
       CIBW_ARCHS: x86_64
       VCPKG_DIR: ${{ github.workspace }}\vcpkg

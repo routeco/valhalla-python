@@ -83,7 +83,6 @@ jobs:
         if: matrix.os == 'windows-2019' && steps.cache_win.outputs.cache-hit != 'true'
         run: |
           ${{ env.VCPKG_DIR }}\vcpkg.exe install --triplet x64-windows boost-algorithm boost-config boost-core boost-heap boost-lexical-cast boost-property-tree boost-variant boost-geometry boost-program-options curl protobuf zlib sqlite3 proj4 luajit libspatialite geos
-          ${{ env.VCPKG_DIR }}\vcpkg.exe list
         shell: cmd
 
       - name: Build Windows wheels

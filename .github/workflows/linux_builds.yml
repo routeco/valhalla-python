@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         # os: [ubuntu-20.04, macos-10.15, windows-2019]
-        os: [ubuntu-20.04, macos-10.15]
+        os: [windows-2019]
     env:
       CIBW_ARCHS: x86_64
       VCPKG_DIR: ${{ github.workspace }}\vcpkg
@@ -61,14 +61,6 @@ jobs:
           CIBW_BUILD:	cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64
           CIBW_TEST_COMMAND: ''
 
-      - name: Cache Win deps
-        if: matrix.os == 'windows-2019'
-        id: cache_win
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.VCPKG_DIR }}
-          key: ${{ hashFiles('./.vcpkg_deps.txt') }}-${{ env.VCPKG_REF }}
-
       - name: Install vcpkg
         if: matrix.os == 'windows-2019' && steps.cache_win.outputs.cache-hit != 'true'
         run: |
@@ -79,11 +71,16 @@ jobs:
           ${{ env.VCPKG_DIR }}\vcpkg.exe version
         shell: cmd
 
-      - name: Install Windows deps
-        if: matrix.os == 'windows-2019' && steps.cache_win.outputs.cache-hit != 'true'
-        run: |
-          ${{ env.VCPKG_DIR }}\vcpkg.exe install --triplet x64-windows boost-algorithm boost-config boost-core boost-heap boost-lexical-cast boost-property-tree boost-variant boost-geometry boost-program-options curl protobuf zlib sqlite3 proj4 luajit libspatialite geos
-        shell: cmd
+      - name: Install Win deps
+        uses: lukka/run-vcpkg@v7
+        with:
+          setupOnly: false
+          vcpkgDirectory: ${{ env.VCPKG_DIR }}
+          appendedCacheKey: ${{ hashFiles('./.vcpkg_deps.txt') }}-${{ env.VCPKG_REF }}
+          vcpkgTriplet: x64-windows
+          vcpkgArguments: --triplet x64-windows '@.vcpkg_deps.txt'
+          doNotUpdateVcpkg: true
+          useShell: cmd
 
       - name: Build Windows wheels
         if: matrix.os == 'windows-2019'

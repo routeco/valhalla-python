@@ -41,7 +41,7 @@ def _tar_tiles(tile_dir: Path, tile_extract: Path, cleanup: bool):
     with tarfile.open(tile_extract, 'w') as tar:
         tar.add(tile_dir_str, arcname=tile_dir.name)
 
-    if cleanup:
-        rmtree(tile_dir_str)
+    # if cleanup:
+    #    rmtree(tile_dir_str)
 
     return str(tile_extract.resolve())

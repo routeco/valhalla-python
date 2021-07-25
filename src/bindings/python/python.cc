@@ -89,7 +89,7 @@ void reset_actor() {
 } // namespace
 
 PYBIND11_MODULE(python_valhalla, m) {
-  m.def("Configure", py_configure, py::arg("config_file"), py::arg("tile_extract"),
+  m.def("Configure", py_configure, py::arg("config_file"), py::arg("tile_extract") = "",
         py::arg("config") = py::dict(), py::arg("verbose") = true,
         "Configure Valhalla with the path to a ``config_file`` JSON.\n"
         "If the file path doesn't exist one will be created at the "

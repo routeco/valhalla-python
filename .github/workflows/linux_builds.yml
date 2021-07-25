@@ -78,7 +78,7 @@ jobs:
           vcpkgDirectory: ${{ env.VCPKG_DIR }}
           appendedCacheKey: ${{ hashFiles('./.vcpkg_deps.txt') }}-${{ env.VCPKG_REF }}
           vcpkgTriplet: x64-windows
-          vcpkgArguments: --triplet x64-windows '@.vcpkg_deps.txt'
+          vcpkgArguments: --triplet x64-windows boost-algorithm boost-config boost-core boost-heap boost-lexical-cast boost-property-tree boost-variant boost-geometry boost-program-options curl protobuf zlib sqlite3 proj4 luajit libspatialite geos
           doNotUpdateVcpkg: true
           useShell: cmd
 

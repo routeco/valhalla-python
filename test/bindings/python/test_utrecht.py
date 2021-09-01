@@ -40,25 +40,8 @@ class TestBindings(unittest.TestCase):
     # Needs to run before configuration was generated the first time
     def test_b_not_configured(self):
         with self.assertRaises(RuntimeError) as e:
-            BuildTiles(['bla'])
+            Route(dict())
             self.assertIn('The service was not configured', str(e))
-
-    def test_c_no_pbfs(self):
-        Configure(
-            str(self.config_path),
-            str(self.tar_path),
-            config=config.get_default(),
-            verbose=True
-        )
-        with self.assertRaises(ValueError) as e:
-            BuildTiles([])
-            self.assertIn('No PBF files specified', str(e))
-
-    def test_d_invalid_pbfs(self):
-        # Valhalla's RuntimError for invalid data
-        with self.assertRaises(RuntimeError) as e:
-            BuildTiles(['blabla'])
-            self.assertIn('Building tiles failed.', str(e))
 
     def test_e_config(self):
         Configure(
@@ -74,29 +57,6 @@ class TestBindings(unittest.TestCase):
 
         from valhalla.config import _global_config
         self.assertEqual(_global_config['mjolnir']['tile_extract'], str(self.tar_path))
-    
-    def test_f_build_tiles(self):
-        pbf_path = os.path.join(PWD.parent.parent, 'data', 'nyc.osm.pbf')
-        tar_path = Path(BuildTiles([pbf_path], False))
-
-        assert tar_path == self.tar_path
-        assert tar_path.is_file()
-        assert tar_path.stat().st_size > 10000  # actually produced a tar
-
-        from valhalla.config import _global_config
-        tile_path = Path(_global_config['mjolnir']['tile_dir'])
-        self.assertTrue(tile_path.is_dir())
-        for d in tile_path.iterdir():
-            self.assertTrue(d.is_dir())
-            self.assertIn(d.name, ['0', '1', '2'])
-
-    def test_g_build_tiles_cleanup(self):
-        pbf_path = os.path.join(PWD.parent.parent, 'data', 'nyc.osm.pbf')
-        BuildTiles([pbf_path])
-
-        from valhalla.config import _global_config
-        tile_path = Path(_global_config['mjolnir']['tile_dir'])
-        self.assertFalse(tile_path.exists())
 
 """
     def test_h_route(self):

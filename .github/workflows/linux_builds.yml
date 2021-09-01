@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         # os: [ubuntu-20.04, macos-10.15, windows-2019]
-        os: [windows-2019]
+        os: [ubuntu-20.04, macos-10.15]
     env:
       CIBW_ARCHS: x86_64
       VCPKG_DIR: ${{ github.workspace }}\vcpkg
@@ -48,7 +48,7 @@ jobs:
         env:
           CIBW_BUILD: cp37-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/gis-ops/manylinux:valhalla_py
-          CIBW_TEST_COMMAND: cd {project}/test/bindings/python && python -m unittest test_utrecht.py -v
+          CIBW_TEST_COMMAND: ''
         
       - name: Build Mac wheels
         if: matrix.os == 'macos-10.15'
@@ -92,7 +92,7 @@ jobs:
         shell: cmd
         env:
           CIBW_BUILD: cp37-win_amd64 cp38-win_amd64 cp39-win_amd64
-          CIBW_TEST_COMMAND: cd {project}\test\bindings\python & python -m unittest test_utrecht.py -v
+          CIBW_TEST_COMMAND: ''
           CIBW_ARCHS_WINDOWS: AMD64
           CMAKE_TOOLCHAIN_FILE: ${{ env.VCPKG_DIR }}\scripts\buildsystems\vcpkg.cmake
           LUA_INCLUDE_DIR: ${{ env.VCPKG_DIR }}\installed\x64-windows\include\luajit

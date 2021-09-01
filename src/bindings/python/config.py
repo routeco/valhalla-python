@@ -2,8 +2,6 @@ import json
 import os
 from pathlib import Path
 
-from .python_valhalla import _reset_actor
-
 _global_config = dict()
 
 

@@ -68,24 +68,6 @@ void py_configure(const std::string& config_file,
                   bool verbose) {
   configure(config_file, tile_extract, std::move(config), verbose);
 }
-
-bool py_build_tiles(const std::vector<std::string>& input_pbfs) {
-  auto pt = configure();
-
-  // confuses the tile builder otherwise
-  pt.get_child("mjolnir").erase("tile_extract");
-  pt.get_child("mjolnir").erase("tile_url");
-
-  bool result = vm::build_tile_set(pt, input_pbfs, vm::BuildStage::kInitialize,
-                                   vm::BuildStage::kCleanup, false);
-
-  return result;
-}
-
-void reset_actor() {
-  auto pt = configure();
-  actor.reset(new valhalla::tyr::actor_t(pt, true));
-}
 } // namespace
 
 PYBIND11_MODULE(python_valhalla, m) {
@@ -110,7 +92,4 @@ PYBIND11_MODULE(python_valhalla, m) {
   m.def("_TransitAvailable", [](const std::string req) { return actor->transit_available(req); });
   m.def("_Expansion", [](const std::string req) { return actor->expansion(req); });
   m.def("_Centroid", [](const std::string req) { return actor->centroid(req); });
-
-  m.def("_BuildTiles", py_build_tiles);
-  m.def("_reset_actor", reset_actor);
 }

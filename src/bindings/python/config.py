@@ -46,7 +46,7 @@ def _create_config(path: str, tile_extract: str, tile_dir: str, c: dict, verbose
     tile_extract = Path(tile_extract or conf['mjolnir']['tile_extract'])
     if not tile_extract.is_file() or tile_extract.suffix != '.tar':
         raise ValueError("mjolnir.tile_extract={} is not a tar file.".format(tile_extract.resolve()))
-    conf['mjolnir']['tile_extract'] = str(tile_extract.resolve())   
+    conf['mjolnir']['tile_extract'] = str(tile_extract.resolve())
 
     # # Check if the tile_dir exists and create a temp dir if not
     tile_dir = Path(tile_dir or conf['mjolnir']['tile_dir'])

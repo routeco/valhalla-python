@@ -43,6 +43,7 @@ class TestBindings(unittest.TestCase):
             Route(dict())
             self.assertIn('The service was not configured', str(e))
 
+    """
     def test_e_config(self):
         Configure(
             str(self.config_path),
@@ -58,7 +59,6 @@ class TestBindings(unittest.TestCase):
         from valhalla.config import _global_config
         self.assertEqual(_global_config['mjolnir']['tile_extract'], str(self.tar_path))
 
-"""
     def test_h_route(self):
         query = {
             "locations": [

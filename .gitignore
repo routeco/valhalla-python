@@ -62,6 +62,8 @@ CMakeLists.txt.user
 
 # python
 __pycache__/
+# clangd
+.cache/
 
 # documentation
 site/

@@ -62,7 +62,7 @@ jobs:
           CIBW_TEST_COMMAND: ''
 
       - name: Install vcpkg
-        if: matrix.os == 'windows-2019' && steps.cache_win.outputs.cache-hit != 'true'
+        if: matrix.os == 'windows-2019'
         run: |
           git clone https://github.com/microsoft/vcpkg ${{ env.VCPKG_DIR }}
           git -C ${{ env.VCPKG_DIR }} checkout ${{ env.VCPKG_REF }}
@@ -72,6 +72,7 @@ jobs:
         shell: cmd
 
       - name: Install Win deps
+        if: matrix.os == 'windows-2019'
         uses: lukka/run-vcpkg@v7
         with:
           setupOnly: false

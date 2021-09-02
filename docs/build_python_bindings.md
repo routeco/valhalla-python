@@ -16,13 +16,11 @@ I needed to modify the default Docker image for the `manylinux_2_24_x86_64` to k
 
 ```
 apt-get install -y \
-  ninja-build  # v1.7.2 \
-  libboost-dev-all  # v1.62 \
-  libspatialite-dev  # v4.3.0a \
-  libprotobuf-dev  # v3.0.0 \
-  libgeos-dev  # v3.5.1 \
-  libluajit-5.1-dev  # v5.1.2 \
-  libcurl4-openssl-dev  # 7.52.1
+  ninja-build \
+  libboost-all-dev \
+  libprotobuf-dev \
+  libgeos-dev \
+  libcurl4-openssl-dev
 ```
 
 #### Configure build
@@ -31,7 +29,7 @@ We only need to configure the build to produce the `setup.py`
 
 ```
 cd valhalla
-cmake -B build -G Ninja -DENABLE_TOOLS=OFF -DENABLE_SERVICES=OFF -DENABLE_TESTS=OFF -DENABLE_BENCHMARKS=OFF -DGEOS_INCLUDE_DIR=/usr/include/geos -DGEOS_LIB=/usr/lib/x86_64-linux-gnu/libgeos-3.5.1.so -DGEOS_C_LIB=/usr/lib/x86_64-linux-gnu/libgeos_c.so.1.9.1 -DPython_LIBRARIES=/opt/python/cp36-cp36m/lib/libpython3.6m.a -DPython_INCLUDE_DIRS=/opt/python/cp36-cp36m/include/python3.6m -DPython_EXECUTABLE=/opt/python/cp36-cp36m/bin/python3.6
+cmake -B build ENABLE_DATA_TOOLS=OFF -DENABLE_TOOLS=OFF -DENABLE_SERVICES=OFF -DENABLE_TESTS=OFF -DENABLE_BENCHMARKS=OFF -DGEOS_INCLUDE_DIR=/usr/include/geos -DGEOS_LIB=/usr/lib/x86_64-linux-gnu/libgeos-3.5.1.so -DGEOS_C_LIB=/usr/lib/x86_64-linux-gnu/libgeos_c.so.1.9.1 -DPython_LIBRARIES=/opt/python/cp36-cp36m/lib/libpython3.6m.a -DPython_INCLUDE_DIRS=/opt/python/cp36-cp36m/include/python3.6m -DPython_EXECUTABLE=/opt/python/cp36-cp36m/bin/python3.6
 ```
 
 #### Build wheels

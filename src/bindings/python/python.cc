@@ -25,6 +25,7 @@ static std::unique_ptr<valhalla::tyr::actor_t> actor = nullptr;
 // configuring multiple times is possible, e.g. to change service_limits
 const boost::property_tree::ptree& configure(const std::string& config_path = "",
                                              const std::string& tile_extract = "",
+                                             const std::string& tile_dir = "",
                                              py::dict config = {},
                                              bool verbose = true) {
   static boost::property_tree::ptree pt;
@@ -33,7 +34,7 @@ const boost::property_tree::ptree& configure(const std::string& config_path = ""
   if (!config_path.empty()) {
     // create the config JSON on the filesystem via python and read it with rapidjson from file
     py::object create_config = py::module_::import("valhalla.config").attr("_create_config");
-    create_config(config_path, tile_extract, config, verbose).cast<bool>();
+    create_config(config_path, tile_extract, tile_dir, config, verbose).cast<bool>();
     try {
       // parse the config
       boost::property_tree::ptree temp_pt;
@@ -64,15 +65,16 @@ const boost::property_tree::ptree& configure(const std::string& config_path = ""
 
 void py_configure(const std::string& config_file,
                   const std::string& tile_extract,
+                  const std::string& tile_dir,
                   py::dict config,
                   bool verbose) {
-  configure(config_file, tile_extract, std::move(config), verbose);
+  configure(config_file, tile_extract, tile_dir, std::move(config), verbose);
 }
 } // namespace
 
 PYBIND11_MODULE(python_valhalla, m) {
   m.def("Configure", py_configure, py::arg("config_file"), py::arg("tile_extract") = "",
-        py::arg("config") = py::dict(), py::arg("verbose") = true,
+        py::arg("tile_dir") = "", py::arg("config") = py::dict(), py::arg("verbose") = true,
         "Configure Valhalla with the path to a ``config_file`` JSON.\n"
         "If the file path doesn't exist one will be created at the "
         "specified path, either with the ``config`` dict or, if no ``config`` specified, the default config "

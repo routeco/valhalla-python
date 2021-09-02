@@ -1,5 +1,5 @@
 import json
-import os
+import warnings
 from pathlib import Path
 
 _global_config = dict()
@@ -26,13 +26,12 @@ def get_help() -> dict:
     return _help_text
 
 
-def _create_config(path: str, tile_extract: str, c: dict, verbose: bool):
+def _create_config(path: str, tile_extract: str, tile_dir: str, c: dict, verbose: bool):
     # set a global config so that other modules can work with it
     global _global_config
     conf = c.copy()
 
     path: Path = Path(path).resolve()
-    tile_extract = Path(tile_extract).resolve()
 
     if path.exists() and not conf:
         # use the existing file if one exists and no config was passed
@@ -43,19 +42,20 @@ def _create_config(path: str, tile_extract: str, c: dict, verbose: bool):
         conf = get_default()
         path.parent.mkdir(exist_ok=True, parents=True)
 
-    # Check if the tile_dir exists and create a temp dir if not
-    tile_dir = Path(conf['mjolnir']['tile_dir'])
-    if not tile_dir or not tile_dir.exists():
-        tile_dir = Path('valhalla_tiles')  # needs to be created explicitly
+    # get tile extract path
+    tile_extract = Path(tile_extract or conf['mjolnir']['tile_extract'])
+    if not tile_extract.is_file() or tile_extract.suffix != '.tar':
+        raise ValueError("mjolnir.tile_extract={} is not a tar file.".format(tile_extract.resolve()))
+    conf['mjolnir']['tile_extract'] = str(tile_extract.resolve())   
+
+    # # Check if the tile_dir exists and create a temp dir if not
+    tile_dir = Path(tile_dir or conf['mjolnir']['tile_dir'])
     if not tile_dir.is_dir():
         raise ValueError("mjolnir.tile_dir={} is not a directory".format(tile_dir.resolve()))
     conf['mjolnir']['tile_dir'] = str(tile_dir.resolve())
     
     # Write the convenience stuff
     conf["loki"]["logging"]["type"] = "std_out" if verbose is True else ""
-    if not tile_extract:
-        tile_extract = Path('valhalla_tiles.tar')
-    conf["mjolnir"]["tile_extract"] = str(tile_extract.resolve())
 
     # Finally write the config to the filesystem
     with open(path, 'w') as f:

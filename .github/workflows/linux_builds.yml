@@ -49,8 +49,7 @@ jobs:
           CIBW_BUILD: cp37-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/gis-ops/manylinux:valhalla_py
           CIBW_TEST_COMMAND: 'python -m unittest test/bindings/python/test_utrecht.py'
-          CIBW_BEFORE_BUILD: 'python -m pip install --upgrade pip && pip config set global.use-feature in-tree-build'
-          CIBW_ENVIRONMENT: 'PIP_USE_FEATURE=in-tree-build'
+          CIBW_BEFORE_BUILD: 'python -m pip install --upgrade pip'
         
       - name: Build Mac wheels
         if: matrix.os == 'macos-10.15'
@@ -62,8 +61,7 @@ jobs:
         env:
           CIBW_BUILD:	cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64
           CIBW_TEST_COMMAND: 'python -m unittest test/bindings/python/test_utrecht.py'
-          CIBW_BEFORE_BUILD: 'python -m pip install --upgrade pip && pip config set global.use-feature in-tree-build'
-          CIBW_ENVIRONMENT: 'PIP_USE_FEATURE=in-tree-build'
+          CIBW_BEFORE_BUILD: 'python -m pip install --upgrade pip'
 
       - name: Install vcpkg
         if: matrix.os == 'windows-2019'

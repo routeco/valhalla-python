@@ -19,22 +19,20 @@ namespace vb = valhalla::baldr;
 namespace py = pybind11;
 
 namespace {
-static std::unique_ptr<valhalla::tyr::actor_t> actor = nullptr;
 
 // statically set the config file and configure logging, throw if you never configured
 // configuring multiple times is possible, e.g. to change service_limits
-const boost::property_tree::ptree& configure(const std::string& config_path = "",
+const boost::property_tree::ptree configure(const std::string& config_path,
                                              const std::string& tile_extract = "",
-                                             const std::string& tile_dir = "",
                                              py::dict config = {},
                                              bool verbose = true) {
-  static boost::property_tree::ptree pt;
+  boost::property_tree::ptree pt;
 
   // only build config when called from binding's Configure!
   if (!config_path.empty()) {
     // create the config JSON on the filesystem via python and read it with rapidjson from file
     py::object create_config = py::module_::import("valhalla.config").attr("_create_config");
-    create_config(config_path, tile_extract, tile_dir, config, verbose).cast<bool>();
+    create_config(config_path, tile_extract, config, verbose);
     try {
       // parse the config
       boost::property_tree::ptree temp_pt;
@@ -51,47 +49,82 @@ const boost::property_tree::ptree& configure(const std::string& config_path = ""
         valhalla::midgard::logging::Configure(logging_config);
       }
     } catch (...) { throw std::runtime_error("Failed to load config from: " + config_path); }
-    // reset the actor
-    actor.reset(new valhalla::tyr::actor_t(pt, true));
-  }
-
-  // if it turned out no one ever configured us we throw
-  if (pt.empty()) {
-    throw std::runtime_error("The service was not configured");
   }
 
   return pt;
 }
-
-void py_configure(const std::string& config_file,
-                  const std::string& tile_extract,
-                  const std::string& tile_dir,
-                  py::dict config,
-                  bool verbose) {
-  configure(config_file, tile_extract, tile_dir, std::move(config), verbose);
-}
 } // namespace
 
-PYBIND11_MODULE(python_valhalla, m) {
-  m.def("Configure", py_configure, py::arg("config_file"), py::arg("tile_extract") = "",
-        py::arg("tile_dir") = "", py::arg("config") = py::dict(), py::arg("verbose") = true,
-        "Configure Valhalla with the path to a ``config_file`` JSON.\n"
-        "If the file path doesn't exist one will be created at the "
-        "specified path, either with the ``config`` dict or, if no ``config`` specified, the default config "
-        "from ``valhalla.config.get_default()``.\nIf you pass a ``config`` dict and the file path "
-        "exists, the file will be overwritten\n``"
-        "``tile_extract`` is the path to an existing valhalla_tiles.tar graph or the path "
-        "``valhalla.BuildTiles()`` will put the tarred graph to.\n``verbose`` prints Valhalla's log.");
+struct simplified_actor_t : public valhalla::tyr::actor_t {
+  simplified_actor_t(const boost::property_tree::ptree& config)
+      : valhalla::tyr::actor_t::actor_t(config, true) {
+  }
 
-  m.def("_Route", [](const std::string req) { return actor->route(req); });
-  m.def("_Locate", [](const std::string req) { return actor->locate(req); });
-  m.def("_OptimizedRoute", [](const std::string req) { return actor->optimized_route(req); });
-  m.def("_Matrix", [](const std::string req) { return actor->matrix(req); });
-  m.def("_Isochrone", [](const std::string req) { return actor->isochrone(req); });
-  m.def("_TraceRoute", [](const std::string req) { return actor->trace_route(req); });
-  m.def("_TraceAttributes", [](const std::string req) { return actor->trace_attributes(req); });
-  m.def("_Height", [](const std::string req) { return actor->height(req); });
-  m.def("_TransitAvailable", [](const std::string req) { return actor->transit_available(req); });
-  m.def("_Expansion", [](const std::string req) { return actor->expansion(req); });
-  m.def("_Centroid", [](const std::string req) { return actor->centroid(req); });
+  std::string route(const std::string& request_str) {
+    return valhalla::tyr::actor_t::route(request_str, nullptr, nullptr);
+  };
+  std::string locate(const std::string& request_str) {
+    return valhalla::tyr::actor_t::locate(request_str, nullptr, nullptr);
+  };
+  std::string optimized_route(const std::string& request_str) {
+    return valhalla::tyr::actor_t::optimized_route(request_str, nullptr, nullptr);
+  };
+  std::string matrix(const std::string& request_str) {
+    return valhalla::tyr::actor_t::matrix(request_str, nullptr, nullptr);
+  };
+  std::string isochrone(const std::string& request_str) {
+    return valhalla::tyr::actor_t::isochrone(request_str, nullptr, nullptr);
+  };
+  std::string trace_route(const std::string& request_str) {
+    return valhalla::tyr::actor_t::trace_route(request_str, nullptr, nullptr);
+  };
+  std::string trace_attributes(const std::string& request_str) {
+    return valhalla::tyr::actor_t::trace_attributes(request_str, nullptr, nullptr);
+  };
+  std::string height(const std::string& request_str) {
+    return valhalla::tyr::actor_t::height(request_str, nullptr, nullptr);
+  };
+  std::string transit_available(const std::string& request_str) {
+    return valhalla::tyr::actor_t::transit_available(request_str, nullptr, nullptr);
+  };
+  std::string expansion(const std::string& request_str) {
+    return valhalla::tyr::actor_t::expansion(request_str, nullptr, nullptr);
+  };
+  std::string centroid(const std::string& request_str) {
+    return valhalla::tyr::actor_t::centroid(request_str, nullptr, nullptr);
+  };
+  std::string status(const std::string& request_str) {
+    return valhalla::tyr::actor_t::status(request_str, nullptr, nullptr);
+  }
+};
+
+PYBIND11_MODULE(python_valhalla, m) {
+  py::class_<simplified_actor_t>(m, "_Actor")
+      .def(py::init<>([](std::string config_file, std::string tile_extract = "", py::dict config = {}, bool verbose = false) {simplified_actor_t actor(configure(config_file, tile_extract, config, verbose)); return actor; }))
+      .def("Route", &simplified_actor_t::route, "Calculates a route.")
+      .def("Locate", &simplified_actor_t::locate, "Provides information about nodes and edges.")
+      .def("OptimizedRoute", &simplified_actor_t::optimized_route,
+           "Optimizes the order of a set of waypoints by time.")
+      .def(
+          "Matrix", &simplified_actor_t::matrix,
+          "Computes the time and distance between a set of locations and returns them as a matrix table.")
+      .def("Isochrone", &simplified_actor_t::isochrone, "Calculates isochrones and isodistances.")
+      .def("TraceRoute", &simplified_actor_t::trace_route,
+           "Map-matching for a set of input locations, e.g. from a GPS.")
+      .def(
+          "TraceAttributes", &simplified_actor_t::trace_attributes,
+          "Returns detailed attribution along each portion of a route calculated from a set of input locations, e.g. from a GPS trace.")
+      .def("Height", &simplified_actor_t::height,
+           "Provides elevation data for a set of input geometries.")
+      .def(
+          "TransitAvailable", &simplified_actor_t::transit_available,
+          "Lookup if transit stops are available in a defined radius around a set of input locations.")
+      .def(
+          "Expansion", &simplified_actor_t::expansion,
+          "Returns all road segments which were touched by the routing algorithm during the graph traversal.")
+      .def(
+          "Centroid", &simplified_actor_t::centroid,
+          "Returns routes from all the input locations to the minimum cost meeting point of those paths.")
+      .def("Status", &simplified_actor_t::status,
+           "Returns nothing or optionally details about Valhalla's configuration.");
 }

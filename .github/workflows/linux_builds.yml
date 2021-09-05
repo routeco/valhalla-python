@@ -48,7 +48,7 @@ jobs:
         env:
           CIBW_BUILD: cp37-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/gis-ops/manylinux:valhalla_py
-          CIBW_TEST_COMMAND: 'python -m unittest test/bindings/python/test_utrecht.py'
+          CIBW_TEST_COMMAND: 'python -m unittest discover -s ${{ github.workspace }}/test/bindings/python'
           CIBW_BEFORE_BUILD: 'python -m pip install --upgrade pip'
         
       - name: Build Mac wheels
@@ -60,7 +60,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD:	cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64
-          CIBW_TEST_COMMAND: 'python -m unittest test/bindings/python/test_utrecht.py'
+          CIBW_TEST_COMMAND: 'python -m unittest discover -s ${{ github.workspace }}/test/bindings/python'
           CIBW_BEFORE_BUILD: 'python -m pip install --upgrade pip'
 
       - name: Install vcpkg

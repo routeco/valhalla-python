@@ -44,8 +44,9 @@ def _create_config(path: str, tile_extract: str, c: dict, verbose: bool):
 
     # get tile extract path
     tile_extract = Path(tile_extract or conf['mjolnir']['tile_extract'])
-    if not tile_extract.is_file() or tile_extract.suffix != '.tar':
-        raise ValueError("mjolnir.tile_extract={} is not a tar file.".format(tile_extract.resolve()))
+    tile_dir = Path(conf['mjolnir']['tile_dir'])
+    if (not tile_extract.is_file() or not tile_extract.suffix == '.tar') or not tile_dir.is_dir():
+        raise ValueError("Either mjolnir.tile_extract or mjolnir.tile_dir need to point at valid graphs.".format(tile_extract.resolve()))
     conf['mjolnir']['tile_extract'] = str(tile_extract.resolve())
     
     # Write the convenience stuff

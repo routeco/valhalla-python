@@ -125,7 +125,8 @@ class CMakeBuild(build_ext):
         super().run()
 
     def build_extension(self, ext: Extension):
-        build_dir = Path(self.build_temp).resolve()  # the root of ./build/temp_xxx dir
+        build_dir = Path("build_py").resolve()  # the root of ./build/temp_xxx dir
+        self.build_temp = str(build_dir)
         ext_dir = Path(self.get_ext_fullpath(ext.name)).parent.resolve()  # where setuptools collects the built files before building the wheel 
         lib_dir = ext_dir.joinpath(PACKAGENAME).resolve()  # the above + ./valhalla
         bin_dir = build_dir.joinpath('src', 'bindings', 'python', 'valhalla').resolve()  # where the py sources are (and UNIX .so/.dylib)
@@ -145,6 +146,7 @@ class CMakeBuild(build_ext):
                       '-DPython_LIBRARIES={}'.format(get_python_lib(plat, self.library_dirs)),
                       '-DENABLE_BENCHMARKS=OFF',
                       '-DENABLE_TESTS=OFF',
+                      '-DENABLE_DATA_TOOLS=OFF',
                       '-DENABLE_TOOLS=OFF',
                       '-DENABLE_SERVICES=OFF',
                       '-DENABLE_CCACHE=OFF',

@@ -42,7 +42,7 @@ conf['mjolnir']['service_limits']['bicycle']['max_locations'] = 500
 actor = Actor('./valhalla.json', './valhalla_tiles.tar', conf)
 ```
 
-### 3. Execute action (Route/Isochrone/Matrix etc.)
+### 2. Execute action (Route/Isochrone/Matrix etc.)
 
 After you configured the service and if there are routable tiles you can call any of the Valhalla actions (see `loki.actions` for a list). The actions support the same format as a Valhalla HTTP API request, either as `dict` or as `str`.
 
@@ -50,10 +50,11 @@ Valhalla encodes the geometry for a routing request with [Google's polyline algo
 
 ```python
 import json
-from valhalla import Route, utils
+from valhalla import Actor, utils
 
 query = {"locations": [{"lat": 42.560225, "lon": 1.575251}, {"lat": 42.553396, "lon": 1.541176}], "costing": "auto", "directions_options": {"language": "ru-RU"}}
-route = Route(query)
+actor = Actor('./valhalla.json', verbose=False)
+route = actor.route(query)
 
 json.dumps(route, indent=2)
 

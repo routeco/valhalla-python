@@ -101,7 +101,20 @@ jobs:
           LUA_INCLUDE_DIR: ${{ env.VCPKG_DIR }}\installed\x64-windows\include\luajit
           LUA_LIBRARIES: ${{ env.VCPKG_DIR }}\installed\x64-windows\lib\lua51.lib
 
-      - name: Upload artifacts
+      - name: Upload Linux artifacts
+        if: matrix.os == 'ubuntu-20.04'
         uses: actions/upload-artifact@v2
         with:
-          path: ./wheelhouse/*.whl
+          path: ./wheelhouse/*manylinux*.whl
+
+      - name: Upload Mac OS artifacts
+        if: matrix.os == 'macos-10.15'
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*macosx*.whl
+
+      - name: Upload Win artifacts
+        if: matrix.os == 'windows-2019'
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*win*.whl
